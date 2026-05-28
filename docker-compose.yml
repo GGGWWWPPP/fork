@@ -76,7 +76,7 @@ services:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: marzban
       MYSQL_USER: marzban
-      MYSQL_PASSWORD: marzban_password
+      MYSQL_PASSWORD: ${MARZBAN_PASSWORD:-marzban_password}
     volumes:
       - mariadb_data:/var/lib/mysql
     ports:
