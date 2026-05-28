@@ -104,7 +104,7 @@ SUB_DOMAIN="${SUB_DOMAIN}"
 MARZBAN_URL="https://${PANEL_DOMAIN}"
 MARZBAN_USERNAME="admin"
 MARZBAN_PASSWORD="${MARZBAN_DB_PASS}"
-MARZBAN_DB_URL="mysql+pymysql://marzban:${MARZBAN_DB_PASS}@mariadb:3306/marzban"
+MARZBAN_DB_URL="mysql+pymysql://marzban:${MARZBAN_DB_PASS}@127.0.0.1:3306/marzban"
 
 # PostgreSQL (Бот/Сайт)
 DB_URL="postgresql+asyncpg://nodeconnect:${DB_PASS}@postgres:5432/nodeconnect"
@@ -127,7 +127,7 @@ cat <<EOF > nodeconnect-core/.env
 # ==========================================
 SUDO_USERNAME="admin"
 SUDO_PASSWORD="${MARZBAN_DB_PASS}"
-SQLALCHEMY_DATABASE_URL="mysql+pymysql://marzban:${MARZBAN_DB_PASS}@mariadb:3306/marzban"
+SQLALCHEMY_DATABASE_URL="mysql+pymysql://marzban:${MARZBAN_DB_PASS}@127.0.0.1:3306/marzban"
 CUSTOM_DASHBOARD_TITLE="NodeConnect Panel"
 EOF
 
