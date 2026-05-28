@@ -4,8 +4,8 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     BOT_TOKEN: str
     ADMIN_IDS: list[int]
-    REQUIRED_CHANNEL_ID: int
-    CHANNEL_URL: str
+    REQUIRED_CHANNEL_ID: int = 0
+    CHANNEL_URL: str = ""
     
     # Marzban API
     MARZBAN_URL: str = "https://your-marzban-domain.com:8000"
