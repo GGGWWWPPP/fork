@@ -54,29 +54,29 @@ echo "==================================================="
 echo "Пожалуйста, ответьте на несколько вопросов для настройки сервера."
 echo ""
 
-read -p "🔹 [1/5] Введите ТОКЕН Telegram-бота: " BOT_TOKEN
+read -p "🔹 [1/5] Введите ТОКЕН Telegram-бота: " BOT_TOKEN </dev/tty
 while [ -z "$BOT_TOKEN" ]; do
-    read -p "Токен не может быть пустым. Введите ТОКЕН Telegram-бота: " BOT_TOKEN
+    read -p "Токен не может быть пустым. Введите ТОКЕН Telegram-бота: " BOT_TOKEN </dev/tty
 done
 
-read -p "🔹 [2/5] Введите ваш TELEGRAM ID (для прав администратора): " ADMIN_ID
+read -p "🔹 [2/5] Введите ваш TELEGRAM ID (для прав администратора): " ADMIN_ID </dev/tty
 while [ -z "$ADMIN_ID" ]; do
-    read -p "ID не может быть пустым. Введите ваш TELEGRAM ID: " ADMIN_ID
+    read -p "ID не может быть пустым. Введите ваш TELEGRAM ID: " ADMIN_ID </dev/tty
 done
 
-read -p "🔹 [3/5] Введите домен для АДМИН-ПАНЕЛИ (например, admin.vpn.com): " PANEL_DOMAIN
+read -p "🔹 [3/5] Введите домен для АДМИН-ПАНЕЛИ (например, admin.vpn.com): " PANEL_DOMAIN </dev/tty
 while [ -z "$PANEL_DOMAIN" ]; do
-    read -p "Домен не может быть пустым. Введите домен АДМИН-ПАНЕЛИ: " PANEL_DOMAIN
+    read -p "Домен не может быть пустым. Введите домен АДМИН-ПАНЕЛИ: " PANEL_DOMAIN </dev/tty
 done
 
-read -p "🔹 [4/5] Введите домен для САЙТА ПРОДАЖ (например, vpn.com): " SITE_DOMAIN
+read -p "🔹 [4/5] Введите домен для САЙТА ПРОДАЖ (например, vpn.com): " SITE_DOMAIN </dev/tty
 while [ -z "$SITE_DOMAIN" ]; do
-    read -p "Домен не может быть пустым. Введите домен САЙТА ПРОДАЖ: " SITE_DOMAIN
+    read -p "Домен не может быть пустым. Введите домен САЙТА ПРОДАЖ: " SITE_DOMAIN </dev/tty
 done
 
-read -p "🔹 [5/5] Введите SUB-домен для ПОДПИСОК клиентов (например, sub.vpn.com): " SUB_DOMAIN
+read -p "🔹 [5/5] Введите SUB-домен для ПОДПИСОК клиентов (например, sub.vpn.com): " SUB_DOMAIN </dev/tty
 while [ -z "$SUB_DOMAIN" ]; do
-    read -p "Домен не может быть пустым. Введите SUB-домен для ПОДПИСОК: " SUB_DOMAIN
+    read -p "Домен не может быть пустым. Введите SUB-домен для ПОДПИСОК: " SUB_DOMAIN </dev/tty
 done
 
 echo ""
