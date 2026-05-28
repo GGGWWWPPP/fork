@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ user.username }} - Subscription</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.1);
+            
+            /* Status Colors */
+            --status-active: #10b981;
+            --status-limited: #ef4444;
+            --status-expired: #f59e0b;
+            --status-disabled: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        .lang-switcher {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(30, 41, 59, 0.7);
+            padding: 0.5rem;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+        }
+
+        .lang-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .lang-btn.active, .lang-btn:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: var(--text-main);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* Glassmorphism Card Base */
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        /* Header Section */
+        .header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.35rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-active { background: rgba(16, 185, 129, 0.1); color: var(--status-active); border: 1px solid rgba(16, 185, 129, 0.2); }
+        .status-limited { background: rgba(239, 68, 68, 0.1); color: var(--status-limited); border: 1px solid rgba(239, 68, 68, 0.2); }
+        .status-expired { background: rgba(245, 158, 11, 0.1); color: var(--status-expired); border: 1px solid rgba(245, 158, 11, 0.2); }
+        .status-disabled { background: rgba(100, 116, 139, 0.1); color: var(--status-disabled); border: 1px solid rgba(100, 116, 139, 0.2); }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 1.5rem;
+            background: rgba(15, 23, 42, 0.4);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 999px;
+            margin-top: 1rem;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            transition: width 0.5s ease;
+        }
+
+        /* Action Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            width: 100%;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.39);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.15);
+            transform: translateY(-2px);
+        }
+
+        /* Apps Section */
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .os-group {
+            margin-bottom: 2rem;
+        }
+
+        .os-title {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .app-link {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            text-decoration: none;
+            color: var(--text-main);
+            transition: all 0.2s ease;
+        }
+
+        .app-link:hover {
+            background: rgba(255,255,255,0.08);
+            transform: translateY(-2px);
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        .app-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 12px;
+            color: #4ade80;
+            overflow: hidden;
+        }
+        
+        .app-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 12px;
+        }
+
+        /* Toast / Copy Notification */
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #10b981;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 16px;
+            position: fixed;
+            z-index: 1;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            font-weight: 600;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transition: opacity 0.3s, bottom 0.3s;
+        }
+
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+            bottom: 50px;
+        }
+
+        /* QR Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background-color: var(--bg-color);
+            margin: 15% auto;
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 350px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .close {
+            color: var(--text-muted);
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .close:hover {
+            color: white;
+        }
+
+        #qrcode {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            display: inline-block;
+            margin-top: 1rem;
+        }
+
+        /* Helper for variables */
+        {% set current_timestamp = now().timestamp() %}
+        {% set active_class = "status-active" if user.status.value == 'active' else 
+                              "status-limited" if user.status.value == 'limited' else 
+                              "status-expired" if user.status.value == 'expired' else 
+                              "status-disabled" %}
+                              
+        {% set usage_percent = (user.used_traffic / user.data_limit * 100) if user.data_limit else 0 %}
+        {% set usage_percent = 100 if usage_percent > 100 else usage_percent %}
+    </style>
+</head>
+<body>
+
+    <div class="lang-switcher">
+        <button class="lang-btn active" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" onclick="setLang('ru')">RU</button>
+    </div>
+
+    <div class="container">
+        
+        <div class="header">
+            <h1 data-i18n="hello">Hello, <span>{{ user.username }}</span></h1>
+            <div class="status-badge {{ active_class }}" data-i18n-status="{{ user.status.value }}">
+                {{ user.status.value }}
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title"><span data-i18n="plan_details">📊 Your Plan Details</span></h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label" data-i18n="data_usage">Data Usage</div>
+                    <div class="stat-value">
+                        {{ user.used_traffic | bytesformat }} / {% if not user.data_limit %}∞{% else %}{{ user.data_limit | bytesformat }}{% endif %}
+                    </div>
+                    {% if user.data_limit %}
+                    <div class="progress-container">
+                        <div class="progress-bar" style="width: {{ usage_percent }}%"></div>
+                    </div>
+                    {% endif %}
+                    {% if user.data_limit_reset_strategy != 'no_reset' %}
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+                        Resets every {{ user.data_limit_reset_strategy.value }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label" data-i18n="expiration_date">Expiration Date</div>
+                    <div class="stat-value">
+                        {% if not user.expire %}
+                            <span data-i18n="never">Never</span>
+                        {% else %}
+                            {{ user.expire | datetime }}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if user.status.value == 'active' %}
+            <div class="card">
+                <h2 class="section-title" data-i18n="quick_actions">⚡ Quick Actions</h2>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="copySubLink()">
+                        📋 <span data-i18n="copy_sub">Copy Subscription Link</span>
+                    </button>
+                    <button class="btn btn-secondary" onclick="showQR()">
+                        📷 <span data-i18n="show_qr">Show QR Code</span>
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="card">
+            <h2 class="section-title" data-i18n="download_apps">📲 Download Apps</h2>
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem;" data-i18n="apps_desc">Choose a client for your device below. Once installed, copy your subscription link and import it into the app.</p>
+
+            <div class="os-group">
+                <div class="os-title">🍏 iOS / iPhone / iPad</div>
+                <div class="app-grid">
+                    <a href="https://apps.apple.com/us/app/v2box-v2ray-client/id6446814690" target="_blank" class="app-link">
+                        <div class="app-icon"><img src="https://docs.rw/clients/logo/v2box-dark.svg" alt="V2Box"></div>
+                        <span>V2Box</span>
+                    </a>
+                    <a href="https://apps.apple.com/us/app/hiddify-proxy-vpn/id6596777532" target="_blank" class="app-link">
+                        <div class="app-icon"><img src="https://docs.rw/clients/logo/hiddify-dark.svg" alt="Hiddify"></div>
+                        <span>Hiddify</span>
+                    </a>
+                    <a href="https://apps.apple.com/us/app/happ-proxy-utility/id6504287215" target="_blank" class="app-link">
+                        <div class="app-icon"><img src="https://docs.rw/clients/logo/happ-dark.svg" alt="Happ"></div>
+                        <span>Happ</span>
+                    </a>
+                    <a href="https://apps.apple.com/us/app/streisand/id6450534064" target="_blank" class="app-link">
+                        <div class="app-icon"><img src="https://docs.rw/clients/logo/straisand-dark.svg" alt="Streisand"></div>
+                        <span>Streisand</span>
+                    </a>
+                    <a href="https://apps.apple.com/us/app/shadowrocket/id932747118" target="_blank" class="app-link">
+                        <div class="app-icon"><img src="https://docs.rw/clients/logo/shadowrocker-dark.svg" alt="Shadowrocket"></div>
+                        <span>Shadowrocket</span>
+                    </a>
+                    <a href="https://apps.apple.com/us/app/karing/id6472431552" target="_blank" class="app-link">
+                        <div class="app-icon"><img src="https://docs.rw/clients/logo/karing-dark.svg" alt="Karing"></div>
+                        <span>Karing</span>
+                    </a>
+                    <a href="https://apps.apple.com/en/app/v2raytun/id6476628951" target="_blank" class="app-link">
+                        <div class="app-icon"><img src="https://docs.rw/clients/logo/v2raytun-dark.svg" alt="V2rayTun"></div>
+                        <span>V2rayTun</span>
+                    </a>
+                    <a href="https://apps.apple.com/app/onexray/id6503296188" target="_blank" class="app-link">
+                        <div class="app-icon"><img src="https://docs.rw/clients/logo/onexray-dark.svg" alt="OneXray"></div>
+                        <span>OneXray</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="os-group">
+                <div class="os-title">🤖 Android</div>
+                <div class="app-grid">
+                    <a href="https://github.com/2dust/v2rayNG/releases/latest" target="_blank" class="app-link">
+                        <div class="app-icon"><img src="https://docs.rw/clients/logo/v2rayng-dark.svg" alt="v2rayNG"></div>
+                        <span>v2rayNG</span>
+                    </a>
+                    <a href="https://play.google.com/store/apps/details?id=app.hiddify.com" target="_blank" class="app-link">
+                        <div class="app-icon"><img src="https://docs.rw/clients/logo/hiddify-dark.svg" alt="Hiddify"></div>
+                        <span>Hiddify</span>
+                    </a>
+                    <a href="https://play.google.com/store/apps/details?id=com.happproxy" target="_blank" class="app-link">
+                        <div class="app-icon"><img src="https://docs.rw/clients/logo/happ-dark.svg" alt="Happ"></div>
+                        <span>Happ</span>
+                    </a>
+                    <a href="https://github.com/MetaCubeX/ClashMetaForAndroid/releases/latest" target="_blank" class="app-link">
+                        <div class="app-icon"><img src="https://docs.rw/clients/logo/clash-meta-dark.svg" alt="Clash Meta"></div>
+                        <span>Clash Meta</span>
+                    </a>
+                    <a href="https://github.com/MatsuriDayo/NekoBoxForAndroid/releases/latest" target="_blank" class="app-link">
+                        <div class="app-icon"><img src="https://docs.rw/clients/logo/nekobox-dark.svg" alt="NekoBox"></div>
+                        <span>NekoBox</span>
+                    </a>
+                    <a href="https://github.com/KaringX/karing/releases/latest" target="_blank" class="app-link">
+                        <div class="app-icon"><img src="https://docs.rw/clients/logo/karing-dark.svg" alt="Karing"></div>
+                        <span>Karing</span>
+                    </a>
+                    <a href="https://play.google.com/store/apps/details?id=com.v2raytun.android" target="_blank" class="app-link">
+                        <div class="app-icon"><img src="https://docs.rw/clients/logo/v2raytun-dark.svg" alt="V2rayTun"></div>
+                        <span>V2rayTun</span>
+                    </a>
+                    <a href="https://github.com/pluralplay/FlClashX/releases/latest" target="_blank" class="app-link">
+                        <div class="app-icon"><img src="https://docs.rw/clients/logo/flclashx-dark.svg" alt="FlClashX"></div>
+                        <span>FlClashX</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="os-group">
+                <div class="os-title">💻 Windows / Desktop</div>
+                <div class="app-grid">
+                    <a href="https://github.com/2dust/v2rayN/releases/latest" target="_blank" class="app-link">
+                        <div class="app-icon"><img src="https://docs.rw/clients/xray.svg" alt="v2rayN"></div>
+                        <span>v2rayN</span>
+                    </a>
+                    <a href="https://github.com/hiddify/hiddify-app/releases" target="_blank" class="app-link">
+                        <div class="app-icon"><img src="https://docs.rw/clients/logo/hiddify-dark.svg" alt="Hiddify"></div>
+                        <span>Hiddify</span>
+                    </a>
+                    <a href="https://github.com/Happ-proxy/happ-desktop/releases/latest" target="_blank" class="app-link">
+                        <div class="app-icon"><img src="https://docs.rw/clients/logo/happ-dark.svg" alt="Happ"></div>
+                        <span>Happ</span>
+                    </a>
+                    <a href="https://github.com/clash-verge-rev/clash-verge-rev/releases/latest" target="_blank" class="app-link">
+                        <div class="app-icon"><img src="https://docs.rw/clients/logo/clash-verge-rev.svg" alt="Clash Verge"></div>
+                        <span>Clash Verge</span>
+                    </a>
+                    <a href="https://github.com/MatsuriDayo/nekoray/releases/latest" target="_blank" class="app-link">
+                        <div class="app-icon"><img src="https://docs.rw/clients/logo/nekobox-dark.svg" alt="NekoRay"></div>
+                        <span>NekoRay</span>
+                    </a>
+                    <a href="https://github.com/KaringX/karing/releases/latest" target="_blank" class="app-link">
+                        <div class="app-icon"><img src="https://docs.rw/clients/logo/karing-dark.svg" alt="Karing"></div>
+                        <span>Karing</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="os-group" style="margin-bottom: 0;">
+                <div class="os-title">🍎 macOS</div>
+                <div class="app-grid">
+                    <a href="https://github.com/hiddify/hiddify-next/releases/latest" target="_blank" class="app-link">
+                        <div class="app-icon">H</div>
+                        <span>Hiddify</span>
+                    </a>
+                    <a href="https://github.com/MetaCubeX/clash-verge/releases/latest" target="_blank" class="app-link">
+                        <div class="app-icon">🌌</div>
+                        <span>Clash Verge</span>
+                    </a>
+                    <a href="https://github.com/yanue/V2rayU/releases" target="_blank" class="app-link">
+                        <div class="app-icon">U</div>
+                        <span>V2rayU</span>
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- QR Code Modal -->
+    <div id="qrModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeQR()">&times;</span>
+            <h3 style="margin-bottom: 1rem;">Subscription QR Code</h3>
+            <p style="font-size: 0.875rem; color: var(--text-muted);">Scan this with your VPN client to import your nodes instantly.</p>
+            <div id="qrcode"></div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast">Link copied to clipboard!</div>
+
+    <script>
+        const subLink = window.location.href;
+
+        function copySubLink() {
+            navigator.clipboard.writeText(subLink).then(() => {
+                const toast = document.getElementById("toast");
+                toast.className = "show";
+                setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
+            }).catch(err => {
+                // Fallback for older browsers
+                const tempInput = document.createElement('input');
+                tempInput.setAttribute('value', subLink);
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+                
+                const toast = document.getElementById("toast");
+                toast.className = "show";
+                setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
+            });
+        }
+
+        let qrCodeGenerated = false;
+
+        function showQR() {
+            const modal = document.getElementById("qrModal");
+            modal.style.display = "block";
+            
+            if(!qrCodeGenerated) {
+                new QRCode(document.getElementById("qrcode"), {
+                    text: subLink,
+                    width: 200,
+                    height: 200,
+                    colorDark : "#000000",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.M
+                });
+                qrCodeGenerated = true;
+            }
+        }
+
+        function closeQR() {
+            document.getElementById("qrModal").style.display = "none";
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById("qrModal");
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        // --- I18n Translation Dictionary ---
+        const i18n = {
+            en: {
+                hello: "Hello, <span>{{ user.username }}</span>",
+                plan_details: "📊 Your Plan Details",
+                data_usage: "Data Usage",
+                expiration_date: "Expiration Date",
+                never: "Never",
+                quick_actions: "⚡ Quick Actions",
+                copy_sub: "Copy Subscription Link",
+                show_qr: "Show QR Code",
+                download_apps: "📲 Download Apps",
+                apps_desc: "Choose a client for your device below. Once installed, copy your subscription link and import it into the app.",
+                status_active: "Active",
+                status_limited: "Limited",
+                status_expired: "Expired",
+                status_disabled: "Disabled",
+                status_on_hold: "On-Hold",
+                recommended: "🌟 Recommended for your device",
+                other_platforms: "Other Platforms"
+            },
+            ru: {
+                hello: "Привет, <span>{{ user.username }}</span>",
+                plan_details: "📊 Детали вашей подписки",
+                data_usage: "Использование трафика",
+                expiration_date: "Срок действия",
+                never: "Никогда",
+                quick_actions: "⚡ Быстрые действия",
+                copy_sub: "Копировать ссылку подписки",
+                show_qr: "Показать QR-код",
+                download_apps: "📲 Скачать приложения",
+                apps_desc: "Выберите клиент для вашего устройства ниже. После установки скопируйте ссылку подписки и импортируйте ее в приложение.",
+                status_active: "Активен",
+                status_limited: "Ограничен",
+                status_expired: "Истек",
+                status_disabled: "Отключен",
+                status_on_hold: "Ожидание",
+                recommended: "🌟 Рекомендуется для вашего устройства",
+                other_platforms: "Другие платформы"
+            }
+        };
+
+        function setLang(lang) {
+            // Update buttons
+            document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.querySelector(`.lang-btn[onclick="setLang('${lang}')"]`);
+            if(activeBtn) activeBtn.classList.add('active');
+
+            // Translate elements with data-i18n
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (i18n[lang][key]) {
+                    el.innerHTML = i18n[lang][key];
+                }
+            });
+
+            // Translate status badge
+            const statusEl = document.querySelector('[data-i18n-status]');
+            if(statusEl) {
+                const rawStatus = statusEl.getAttribute('data-i18n-status');
+                const statusKey = `status_${rawStatus}`;
+                if (i18n[lang][statusKey]) {
+                    statusEl.innerText = i18n[lang][statusKey];
+                }
+            }
+
+            localStorage.setItem('preferredLang', lang);
+        }
+
+        // --- OS Detection and Wizard ---
+        function detectOS() {
+            var userAgent = window.navigator.userAgent || window.navigator.vendor || window.opera;
+            if (/windows phone/i.test(userAgent)) return "Windows";
+            if (/android/i.test(userAgent)) return "Android";
+            if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) return "iOS";
+            if (/Macintosh|MacIntel|MacPPC|Mac68K/.test(userAgent)) return "macOS";
+            if (/Win32|Win64|Windows|WinCE/.test(userAgent)) return "Windows";
+            if (/Linux/.test(userAgent)) return "Linux";
+            return "Unknown";
+        }
+
+        function initWizard() {
+            const os = detectOS();
+            const groups = document.querySelectorAll('.os-group');
+            let matchedGroup = null;
+
+            groups.forEach(group => {
+                const title = group.querySelector('.os-title').innerText;
+                if(title.includes(os)) {
+                    matchedGroup = group;
+                }
+            });
+
+            if(matchedGroup) {
+                // Move matched group to top inside the container
+                const container = matchedGroup.parentNode;
+                
+                const recTitle = document.createElement('h3');
+                recTitle.style.marginBottom = '1rem';
+                recTitle.style.color = 'var(--primary)';
+                recTitle.setAttribute('data-i18n', 'recommended');
+                recTitle.innerText = "🌟 Recommended for your device";
+                
+                matchedGroup.querySelector('.os-title').style.display = 'none';
+                matchedGroup.insertBefore(recTitle, matchedGroup.firstChild);
+                
+                container.insertBefore(matchedGroup, container.firstChild.nextSibling.nextSibling);
+
+                // Add "Other Platforms" separator
+                const otherTitle = document.createElement('h3');
+                otherTitle.style.margin = '2rem 0 1rem 0';
+                otherTitle.style.borderBottom = '1px solid var(--border-color)';
+                otherTitle.style.paddingBottom = '0.5rem';
+                otherTitle.setAttribute('data-i18n', 'other_platforms');
+                otherTitle.innerText = "Other Platforms";
+                
+                matchedGroup.insertAdjacentElement('afterend', otherTitle);
+            }
+        }
+
+        // Init language and wizard on load
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedLang = localStorage.getItem('preferredLang') || (navigator.language.startsWith('ru') ? 'ru' : 'en');
+            setLang(savedLang);
+            initWizard();
+        });
+
+    </script>
+</body>
+</html>
