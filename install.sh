@@ -32,7 +32,9 @@ if [ ! -f nginx/ssl/fullchain.pem ]; then
     openssl req -x509 -newkey rsa:2048 \
         -keyout nginx/ssl/privkey.pem \
         -out nginx/ssl/fullchain.pem \
-        -days 365 -nodes \
+        -days 365 -nodes -subj "/CN=localhost"
+fi
+
 # 4. Пошаговый Интерактивный Мастер Установки
 echo "==================================================="
 echo "⚙️  МАСТЕР НАСТРОЙКИ NODECONNECT"
