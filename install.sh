@@ -24,6 +24,18 @@ if ! command -v docker-compose &> /dev/null; then
     apt install -y docker-compose-plugin docker-compose
 fi
 
+# 2.5 Клонирование репозитория
+echo "📥 Скачиваем файлы проекта NodeConnect..."
+apt install -y git
+if [ -d "/opt/NodeConnect" ]; then
+    echo "⚠️ Папка /opt/NodeConnect уже существует. Обновляем..."
+    cd /opt/NodeConnect
+    git pull
+else
+    git clone https://github.com/GGGWWWPPP/fork.git /opt/NodeConnect
+    cd /opt/NodeConnect
+fi
+
 # 3. Создаём SSL сертификаты (self-signed для начала)
 echo "🔐 Настраиваем SSL сертификаты..."
 mkdir -p nginx/ssl
