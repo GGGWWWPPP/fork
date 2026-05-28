@@ -30,7 +30,8 @@ apt install -y git
 if [ -d "/opt/NodeConnect" ]; then
     echo "⚠️ Папка /opt/NodeConnect уже существует. Обновляем..."
     cd /opt/NodeConnect
-    git pull
+    git fetch --all
+    git reset --hard origin/main
 else
     git clone https://github.com/GGGWWWPPP/fork.git /opt/NodeConnect
     cd /opt/NodeConnect
@@ -116,6 +117,9 @@ DB_NAME=nodeconnect
 DB_USER=nodeconnect
 DB_PASSWORD=${DB_PASS}
 EOF
+
+echo "📝 Создание директории nodeconnect-core..."
+mkdir -p nodeconnect-core
 
 cat <<EOF > nodeconnect-core/.env
 # ==========================================
