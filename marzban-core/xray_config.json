@@ -1,0 +1,57 @@
+{
+  "log": {
+    "loglevel": "warning"
+  },
+  "routing": {
+    "rules": [
+      {
+        "domain": [
+          "regexp:.*\\.onion$"
+        ],
+        "outboundTag": "TOR",
+        "type": "field"
+      },
+      {
+        "ip": [
+          "geoip:private"
+        ],
+        "outboundTag": "BLOCK",
+        "type": "field"
+      }
+    ]
+  },
+  "inbounds": [
+    {
+      "tag": "Shadowsocks TCP",
+      "listen": "0.0.0.0",
+      "port": 1080,
+      "protocol": "shadowsocks",
+      "settings": {
+        "clients": [],
+        "network": "tcp,udp"
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "protocol": "freedom",
+      "tag": "DIRECT"
+    },
+    {
+      "protocol": "blackhole",
+      "tag": "BLOCK"
+    },
+    {
+      "protocol": "socks",
+      "tag": "TOR",
+      "settings": {
+        "servers": [
+          {
+            "address": "127.0.0.1",
+            "port": 9050
+          }
+        ]
+      }
+    }
+  ]
+}
