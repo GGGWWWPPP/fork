@@ -28,7 +28,8 @@ COPY --from=build /usr/local/share/xray /usr/local/share/xray
 
 COPY . /code
 
-RUN ln -s /code/marzban-cli.py /usr/bin/marzban-cli \
+RUN pip install setuptools \
+    && ln -s /code/marzban-cli.py /usr/bin/marzban-cli \
     && chmod +x /usr/bin/marzban-cli \
     && marzban-cli completion install --shell bash
 
