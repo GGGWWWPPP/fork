@@ -138,6 +138,11 @@ echo ""
 echo "🔧 Останавливаем старые контейнеры (если есть)..."
 docker-compose down 2>/dev/null || true
 
+echo "🔧 Настраиваем Nginx под ваши домены..."
+sed -i "s/{{SITE_DOMAIN}}/${SITE_DOMAIN}/g" nginx/nginx.conf
+sed -i "s/{{PANEL_DOMAIN}}/${PANEL_DOMAIN}/g" nginx/nginx.conf
+sed -i "s/{{SUB_DOMAIN}}/${SUB_DOMAIN}/g" nginx/nginx.conf
+
 echo "🔧 Запускаем новые сервисы..."
 docker-compose up -d --build
 
