@@ -12,7 +12,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY ./requirements.txt /code/
-RUN python3 -m pip install --upgrade pip setuptools \
+RUN python3 -m pip install --upgrade pip "setuptools<70" \
     && pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
 FROM python:$PYTHON_VERSION-slim
@@ -28,7 +28,7 @@ COPY --from=build /usr/local/share/xray /usr/local/share/xray
 
 COPY . /code
 
-RUN pip install setuptools \
+RUN pip install "setuptools<70" \
     && ln -s /code/marzban-cli.py /usr/bin/marzban-cli \
     && chmod +x /usr/bin/marzban-cli \
     && marzban-cli completion install --shell bash
