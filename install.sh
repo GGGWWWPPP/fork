@@ -33,39 +33,45 @@ if [ ! -f nginx/ssl/fullchain.pem ]; then
         -keyout nginx/ssl/privkey.pem \
         -out nginx/ssl/fullchain.pem \
         -days 365 -nodes \
-        -subj "/CN=nodeconnect.tech"
-# 4. Обработка аргументов или интерактивный ввод
-BOT_TOKEN=""
-ADMIN_ID=""
-DOMAIN_NAME=""
+# 4. Пошаговый Интерактивный Мастер Установки
+echo "==================================================="
+echo "⚙️  МАСТЕР НАСТРОЙКИ NODECONNECT"
+echo "==================================================="
+echo "Пожалуйста, ответьте на несколько вопросов для настройки сервера."
+echo ""
 
-while getopts t:a:d: flag
-do
-    case "${flag}" in
-        t) BOT_TOKEN=${OPTARG};;
-        a) ADMIN_ID=${OPTARG};;
-        d) DOMAIN_NAME=${OPTARG};;
-    esac
+read -p "🔹 [1/5] Введите ТОКЕН Telegram-бота: " BOT_TOKEN
+while [ -z "$BOT_TOKEN" ]; do
+    read -p "Токен не может быть пустым. Введите ТОКЕН Telegram-бота: " BOT_TOKEN
 done
 
-if [ ! -f .env ]; then
-    echo "⚙️  Настройка конфигурации (.env)..."
-    
-    if [ -z "$BOT_TOKEN" ]; then
-        read -p "🔹 Введите токен Telegram-бота: " BOT_TOKEN
-    fi
-    if [ -z "$ADMIN_ID" ]; then
-        read -p "🔹 Введите ваш Telegram ID: " ADMIN_ID
-    fi
-    if [ -z "$DOMAIN_NAME" ]; then
-        read -p "🔹 Введите домен (например, vpn.com): " DOMAIN_NAME
-    fi
+read -p "🔹 [2/5] Введите ваш TELEGRAM ID (для прав администратора): " ADMIN_ID
+while [ -z "$ADMIN_ID" ]; do
+    read -p "ID не может быть пустым. Введите ваш TELEGRAM ID: " ADMIN_ID
+done
 
-    echo "🔐 Генерация безопасных паролей..."
-    DB_PASS=$(openssl rand -hex 16)
-    MARZBAN_DB_PASS=$(openssl rand -hex 16)
+read -p "🔹 [3/5] Введите домен для АДМИН-ПАНЕЛИ (например, admin.vpn.com): " PANEL_DOMAIN
+while [ -z "$PANEL_DOMAIN" ]; do
+    read -p "Домен не может быть пустым. Введите домен АДМИН-ПАНЕЛИ: " PANEL_DOMAIN
+done
 
-    cat <<EOF > .env
+read -p "🔹 [4/5] Введите домен для САЙТА ПРОДАЖ (например, vpn.com): " SITE_DOMAIN
+while [ -z "$SITE_DOMAIN" ]; do
+    read -p "Домен не может быть пустым. Введите домен САЙТА ПРОДАЖ: " SITE_DOMAIN
+done
+
+read -p "🔹 [5/5] Введите SUB-домен для ПОДПИСОК клиентов (например, sub.vpn.com): " SUB_DOMAIN
+while [ -z "$SUB_DOMAIN" ]; do
+    read -p "Домен не может быть пустым. Введите SUB-домен для ПОДПИСОК: " SUB_DOMAIN
+done
+
+echo ""
+echo "🔐 Генерация безопасных паролей для баз данных..."
+DB_PASS=$(openssl rand -hex 16)
+MARZBAN_DB_PASS=$(openssl rand -hex 16)
+
+echo "📝 Создание конфигурационного файла .env..."
+cat <<EOF > .env
 # ==========================================
 # NodeConnect — Автосгенерированная конфигурация
 # ==========================================
@@ -74,8 +80,13 @@ if [ ! -f .env ]; then
 BOT_TOKEN="${BOT_TOKEN}"
 ADMIN_IDS=[${ADMIN_ID}]
 
-# Marzban
-MARZBAN_URL="https://admin.${DOMAIN_NAME}"
+# Домены
+SITE_DOMAIN="${SITE_DOMAIN}"
+PANEL_DOMAIN="${PANEL_DOMAIN}"
+SUB_DOMAIN="${SUB_DOMAIN}"
+
+# NodeConnect Core (Marzban)
+MARZBAN_URL="https://${PANEL_DOMAIN}"
 MARZBAN_USERNAME="admin"
 MARZBAN_PASSWORD="${MARZBAN_DB_PASS}"
 MARZBAN_DB_URL="mysql+aiomysql://marzban:${MARZBAN_DB_PASS}@mariadb:3306/marzban"
@@ -91,8 +102,8 @@ DB_NAME=nodeconnect
 DB_USER=nodeconnect
 DB_PASSWORD=${DB_PASS}
 EOF
-    echo "✅ Файл .env успешно создан!"
-fi
+
+echo "✅ Конфигурация успешно сохранена!"
 
 # 5. Запуск всех сервисов (PostgreSQL поднимется и автоматически загрузит init.sql)
 echo ""
