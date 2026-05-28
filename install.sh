@@ -117,6 +117,16 @@ DB_USER=nodeconnect
 DB_PASSWORD=${DB_PASS}
 EOF
 
+cat <<EOF > nodeconnect-core/.env
+# ==========================================
+# NodeConnect Core (Marzban) — Автосгенерированная конфигурация
+# ==========================================
+SUDO_USERNAME="admin"
+SUDO_PASSWORD="${MARZBAN_DB_PASS}"
+SQLALCHEMY_DATABASE_URL="mysql+aiomysql://marzban:${MARZBAN_DB_PASS}@mariadb:3306/marzban"
+CUSTOM_DASHBOARD_TITLE="NodeConnect Panel"
+EOF
+
 echo "✅ Конфигурация успешно сохранена!"
 
 # 5. Запуск всех сервисов (PostgreSQL поднимется и автоматически загрузит init.sql)

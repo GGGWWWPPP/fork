@@ -82,10 +82,10 @@ services:
 
   marzban:
     build: 
-      context: ./marzban-core
+      context: ./nodeconnect-core
       dockerfile: Dockerfile
     restart: always
-    env_file: ./marzban-core/.env
+    env_file: ./nodeconnect-core/.env
     network_mode: host
     depends_on:
       - mariadb
