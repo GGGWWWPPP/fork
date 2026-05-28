@@ -1,0 +1,15 @@
+__pycache__
+*.pyc
+*.pyo
+*.db
+*.db.backup_*
+.env.local
+.env.example
+.git
+.gitignore
+.gemini
+*.md
+nodeconnect.db
+nginx/ssl/*.pem
+migrate_sqlite_to_postgres.py
+install.sh

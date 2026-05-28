@@ -1,0 +1,1852 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Node Connect | Личный кабинет</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <meta name="description" content="Node Connect - VPN сервис нового поколения. Личный кабинет и управление подпиской.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- QR Code Library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0a0a0a',
+                        neonBlue: '#00f0ff',
+                        deepBlue: '#0055ff',
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'pulse-glow': 'pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'fade-in-up': 'fadeInUp 0.6s ease-out forwards',
+                        'fade-in': 'fadeIn 0.4s ease-out forwards',
+                        'fade-in-right': 'fadeInRight 0.3s ease-out forwards',
+                    },
+                    keyframes: {
+                        'pulse-glow': {
+                            '0%, 100%': { opacity: '1', boxShadow: '0 0 15px rgba(0, 240, 255, 0.4)' },
+                            '50%': { opacity: '.8', boxShadow: '0 0 30px rgba(0, 240, 255, 0.8)' },
+                        },
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        fadeInRight: {
+                            '0%': { opacity: '0', transform: 'translateX(40px)' },
+                            '100%': { opacity: '1', transform: 'translateX(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0a0a0a;
+            color: #ffffff;
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at 50% -20%, #1e3a8a 0%, #0a0a0a 60%);
+            min-height: 100vh;
+        }
+        
+        .glass {
+            background: rgba(20, 25, 40, 0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 240, 255, 0.15);
+        }
+        .glass-card {
+            background: rgba(15, 20, 35, 0.6);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.3s ease;
+        }
+        .glass-card:hover {
+            border-color: rgba(0, 240, 255, 0.3);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.1);
+        }
+        
+        .cyber-grid {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-size: 50px 50px;
+            background-image: 
+                linear-gradient(to right, rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+            z-index: -1;
+            mask-image: radial-gradient(circle at center, black 40%, transparent 80%);
+            -webkit-mask-image: radial-gradient(circle at center, black 40%, transparent 80%);
+        }
+
+        .input-glow:focus {
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+            border-color: #00f0ff;
+            outline: none;
+        }
+
+        .hidden-view { display: none !important; }
+        .view-transition { animation: fadeIn 0.4s ease-out forwards; }
+        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #1e3a8a; border-radius: 4px; }
+
+        /* Fortune Wheel */
+        .wheel-container { position: relative; width: 320px; height: 320px; margin: 0 auto; }
+        .wheel {
+            width: 100%; height: 100%; border-radius: 50%;
+            border: 4px solid rgba(0,240,255,0.3);
+            background: conic-gradient(
+                #1a1a3e 0deg 60deg, #0f2557 60deg 120deg,
+                #1a1a3e 120deg 180deg, #0f2557 180deg 240deg,
+                #1a1a3e 240deg 300deg, #0f2557 300deg 360deg
+            );
+            transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+            position: relative;
+        }
+        .wheel-label {
+            position: absolute; width: 50%; height: 50%;
+            transform-origin: 100% 100%;
+            display: flex; align-items: center; justify-content: center;
+            padding-right: 30px; font-weight: bold; font-size: 14px;
+            color: white; text-shadow: 0 0 6px rgba(0,240,255,0.6);
+        }
+        .wheel-pointer {
+            position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+            width: 0; height: 0;
+            border-left: 14px solid transparent; border-right: 14px solid transparent;
+            border-top: 24px solid #00f0ff;
+            filter: drop-shadow(0 0 8px rgba(0,240,255,0.8));
+            z-index: 10;
+        }
+        .milestone-dot {
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 12px;
+            transition: all 0.3s;
+        }
+        .milestone-locked { background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); color: #666; }
+        .milestone-available { background: rgba(0,240,255,0.15); border: 2px solid #00f0ff; color: #00f0ff; cursor: pointer; animation: pulse-glow 2s infinite; }
+        .milestone-claimed { background: rgba(34,197,94,0.15); border: 2px solid #22c55e; color: #22c55e; }
+        ::-webkit-scrollbar-thumb:hover { background: #0055ff; }
+
+        .plan-radio:checked + label {
+            border-color: #00f0ff;
+            background: rgba(0, 240, 255, 0.1);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+        }
+        .plan-radio:checked + label .check-icon {
+            opacity: 1;
+            transform: scale(1);
+        }
+    </style>
+</head>
+<body class="flex flex-col font-sans antialiased relative">
+    <div class="cyber-grid"></div>
+
+    <header class="w-full py-5 px-4 sm:px-8 border-b border-white/5 z-40 glass sticky top-0">
+        <div class="container mx-auto max-w-6xl flex justify-between items-center">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="showView('landing')">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-neonBlue to-deepBlue flex items-center justify-center p-[2px]">
+                    <div class="w-full h-full bg-darkBg rounded-[10px] flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-neonBlue" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                    </div>
+                </div>
+                <span class="text-2xl font-bold tracking-tight text-white">Node<span class="text-neonBlue">Connect</span></span>
+            </div>
+            
+            <div id="header-auth-buttons">
+                <button onclick="openAuthModal()" class="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold py-2 px-6 rounded-lg transition-all duration-300">
+                    Личный кабинет
+                </button>
+            </div>
+            
+            <div id="header-user-menu" class="hidden-view flex items-center gap-4">
+                <div class="hidden sm:flex flex-col items-end">
+                    <span class="text-sm font-medium text-white" id="header-email">user@mail.com</span>
+                    <span class="text-xs text-neonBlue">Online</span>
+                </div>
+                <button onclick="logout()" class="p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-colors border border-red-500/20" title="Выйти">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main id="view-landing" class="flex-grow flex flex-col items-center justify-center px-4 py-20 z-10 w-full relative view-transition">
+        <div class="absolute top-20 left-1/2 -translate-x-1/2 w-96 h-96 bg-neonBlue/10 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
+
+        <div class="text-center max-w-4xl mx-auto mb-16 px-4">
+            <h1 class="text-4xl sm:text-5xl md:text-7xl font-extrabold text-white mb-6 leading-tight animate-fade-in-up">
+                Твой мост в <span class="text-transparent bg-clip-text bg-gradient-to-r from-neonBlue to-blue-400 drop-shadow-[0_0_10px_rgba(0,240,255,0.8)]">свободный</span> интернет
+            </h1>
+            <p class="text-lg sm:text-xl text-gray-400 mb-10 animate-fade-in-up delay-100 max-w-2xl mx-auto">
+                Самый быстрый и безопасный VPN-сервис. Управляй устройствами, выбирай тарифы и наслаждайся безграничным интернетом.
+            </p>
+            <div class="animate-fade-in-up delay-200">
+                <button onclick="openAuthModal()" class="inline-flex items-center gap-3 bg-gradient-to-r from-deepBlue to-blue-600 hover:from-blue-500 hover:to-blue-400 text-white text-lg font-bold py-4 px-10 rounded-xl transition-all duration-300 transform hover:-translate-y-1 hover:shadow-[0_0_30px_rgba(0,85,255,0.6)]">
+                    ПЕРЕЙТИ В КАБИНЕТ
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 px-4 max-w-6xl w-full mx-auto animate-fade-in-up delay-300">
+            <div class="glass-card p-8 rounded-2xl">
+                <div class="w-12 h-12 rounded-xl bg-blue-900/40 border border-blue-500/30 flex items-center justify-center text-neonBlue mb-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                </div>
+                <h4 class="text-xl font-bold text-white mb-3">Высокая скорость</h4>
+                <p class="text-gray-400 text-sm leading-relaxed">Современные протоколы VLESS/Reality обеспечивают стабильное соединение без потери скорости.</p>
+            </div>
+            <div class="glass-card p-8 rounded-2xl">
+                <div class="w-12 h-12 rounded-xl bg-blue-900/40 border border-blue-500/30 flex items-center justify-center text-neonBlue mb-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                </div>
+                <h4 class="text-xl font-bold text-white mb-3">Надежная защита</h4>
+                <p class="text-gray-400 text-sm leading-relaxed">Весь трафик зашифрован. Мы не ведем логи и гарантируем полную анонимность в сети.</p>
+            </div>
+            <div class="glass-card p-8 rounded-2xl">
+                <div class="w-12 h-12 rounded-xl bg-blue-900/40 border border-blue-500/30 flex items-center justify-center text-neonBlue mb-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                </div>
+                <h4 class="text-xl font-bold text-white mb-3">Мульти-устройства</h4>
+                <p class="text-gray-400 text-sm leading-relaxed">Настраивай тариф под себя. Выбирай нужное количество устройств и плати только за то, что используешь.</p>
+            </div>
+        </div>
+    </main>
+
+    <main id="view-cabinet" class="hidden-view flex-grow w-full max-w-6xl mx-auto px-4 py-10 z-10 view-transition">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div class="lg:col-span-3 space-y-4">
+                <div class="glass-card rounded-2xl p-6">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-12 h-12 rounded-full bg-blue-900/50 flex items-center justify-center border border-neonBlue/30 text-neonBlue font-bold text-xl">
+                            <span id="user-initial">U</span>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-400">Пользователь</p>
+                            <p class="text-white font-mono text-sm truncate w-32" id="cab-email">user@mail.com</p>
+                        </div>
+                    </div>
+                    <hr class="border-white/5 mb-4">
+                    <nav class="space-y-2">
+                        <button onclick="switchCabinetTab('dashboard')" id="tab-dashboard" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-neonBlue/10 text-neonBlue border border-neonBlue/20 transition-all">
+                            Главная
+                        </button>
+                        <button onclick="switchCabinetTab('buy')" id="tab-buy" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition-all">
+                            Купить подписку
+                        </button>
+                        <button onclick="switchCabinetTab('fortune')" id="tab-fortune" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition-all">
+                            🎡 Колесо фортуны
+                        </button>
+                        <button onclick="switchCabinetTab('referral')" id="tab-referral" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition-all">
+                            👥 Реф. программа
+                        </button>
+                        <button onclick="switchCabinetTab('guide')" id="tab-guide" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition-all">
+                            📖 Как подключить
+                        </button>
+                        <button onclick="switchCabinetTab('admin')" id="tab-admin" class="hidden-view w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition-all border-t border-red-500/20 mt-2 pt-4">
+                            🛡 Админ-панель
+                        </button>
+                        <a href="https://t.me/NodeConnect_bot" target="_blank" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-neonBlue bg-neonBlue/5 hover:bg-neonBlue/10 transition-all mt-4 border border-neonBlue/10">
+                            🤖 Наш Telegram Бот
+                        </a>
+                    </nav>
+                </div>
+            </div>
+
+            <div class="lg:col-span-9">
+                <!-- DASHBOARD TAB -->
+                <div id="cab-tab-dashboard" class="space-y-6 view-transition">
+                    <h2 class="text-3xl font-bold text-white mb-6">Обзор</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="glass-card rounded-2xl p-6 relative overflow-hidden">
+                            <div class="absolute -right-10 -bottom-10 w-32 h-32 bg-neonBlue/10 rounded-full blur-2xl"></div>
+                            <h3 class="text-gray-400 font-medium mb-1">Статус подписки</h3>
+                            <div class="flex items-center gap-3 mb-4">
+                                <div id="status-indicator" class="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)]"></div>
+                                <span id="status-text" class="text-2xl font-bold text-white">Неактивна</span>
+                            </div>
+                            <p class="text-sm text-gray-400 mb-6">Действует до: <span id="expiry-date" class="text-white font-medium">—</span></p>
+                            
+                            <div class="flex justify-between items-center bg-darkBg/50 rounded-xl p-4 border border-white/5">
+                                <div>
+                                    <p class="text-xs text-gray-500 mb-1">Устройства</p>
+                                    <p class="text-lg font-bold text-white" id="devices-count">0 / 0</p>
+                                </div>
+                                <div class="w-px h-8 bg-white/10"></div>
+                                <div>
+                                    <p class="text-xs text-gray-500 mb-1">Трафик</p>
+                                    <p class="text-lg font-bold text-white">Безлимит</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glass-card rounded-2xl p-6 flex flex-col justify-center items-center text-center">
+                            <h3 class="text-xl font-bold text-white mb-2" id="action-title">Продление доступа</h3>
+                            <p class="text-sm text-gray-400 mb-6" id="action-desc">Приобрети подписку, чтобы получить ключ доступа к VPN серверам.</p>
+                            <button onclick="switchCabinetTab('buy')" class="w-full bg-gradient-to-r from-neonBlue to-blue-500 hover:from-white hover:to-white text-darkBg font-bold py-3 px-6 rounded-xl transition-all shadow-[0_0_15px_rgba(0,240,255,0.4)]">
+                                ОФОРМИТЬ ПОДПИСКУ
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="key-section" class="glass-card rounded-2xl p-6 mt-6 hidden-view">
+                        <h3 class="text-lg font-bold text-white mb-4">Ключ доступа</h3>
+                        <div class="bg-darkBg/90 border border-gray-700 rounded-xl p-4 flex flex-col sm:flex-row items-center gap-4">
+                            <p id="user-vpn-key" class="text-neonBlue font-mono text-sm break-all flex-grow w-full">vless://...</p>
+                            <div class="flex gap-2 min-w-fit">
+                                <button onclick="copyVpnKey()" class="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition-colors border border-white/10">
+                                    Копировать
+                                </button>
+                                <button onclick="toggleQrCode()" class="bg-neonBlue/10 hover:bg-neonBlue/20 text-neonBlue px-4 py-2 rounded-lg transition-colors border border-neonBlue/20">
+                                    QR-код
+                                </button>
+                            </div>
+                        </div>
+                        <!-- QR Code -->
+                        <div id="qr-section" class="hidden-view mt-4 flex flex-col items-center">
+                            <div class="bg-white p-4 rounded-2xl shadow-[0_0_30px_rgba(0,240,255,0.2)]">
+                                <div id="qr-code"></div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-3">Отсканируйте в V2rayNG, Streisand или Hiddify</p>
+                        </div>
+                        <!-- Setup Guide Button -->
+                        <div class="mt-4 p-4 bg-gradient-to-r from-neonBlue/5 to-blue-500/5 border border-neonBlue/10 rounded-xl flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <span class="text-2xl">📱</span>
+                                <div>
+                                    <p class="text-white font-bold text-sm">Не знаете как подключить?</p>
+                                    <p class="text-gray-400 text-xs">Пошаговый гайд за 2 минуты</p>
+                                </div>
+                            </div>
+                            <button onclick="switchCabinetTab('guide')" class="bg-neonBlue/20 hover:bg-neonBlue/30 text-neonBlue font-bold py-2 px-4 rounded-lg text-sm transition-all">
+                                Открыть гайд
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Traffic Stats -->
+                    <div id="traffic-section" class="glass-card rounded-2xl p-6 mt-6 hidden-view">
+                        <h3 class="text-lg font-bold text-white mb-4">📊 Статистика использования</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div class="bg-white/5 rounded-xl p-4 text-center">
+                                <p class="text-gray-400 text-xs mb-1">Загрузка ↓</p>
+                                <p class="text-xl font-bold text-green-400" id="stat-download">—</p>
+                            </div>
+                            <div class="bg-white/5 rounded-xl p-4 text-center">
+                                <p class="text-gray-400 text-xs mb-1">Отправка ↑</p>
+                                <p class="text-xl font-bold text-blue-400" id="stat-upload">—</p>
+                            </div>
+                            <div class="bg-white/5 rounded-xl p-4 text-center">
+                                <p class="text-gray-400 text-xs mb-1">Осталось</p>
+                                <p class="text-xl font-bold text-neonBlue" id="stat-days-left">—</p>
+                            </div>
+                            <div class="bg-white/5 rounded-xl p-4 text-center">
+                                <p class="text-gray-400 text-xs mb-1">Онлайн</p>
+                                <p class="text-xl font-bold text-yellow-400" id="stat-online">—</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gift Certificates -->
+                    <div class="glass-card rounded-2xl p-6 mt-6">
+                        <h3 class="text-lg font-bold text-white mb-4">🎁 Подарочные сертификаты</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Create Gift -->
+                            <div class="bg-white/5 rounded-xl p-4">
+                                <p class="text-white font-bold text-sm mb-2">Подарить VPN другу</p>
+                                <div class="flex gap-2">
+                                    <input type="number" id="gift-days-input" min="1" max="90" placeholder="Дней (1-90)" class="flex-grow bg-darkBg border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-neonBlue focus:outline-none">
+                                    <button onclick="createGift()" class="bg-neonBlue/20 hover:bg-neonBlue/30 text-neonBlue font-bold px-4 py-2 rounded-lg text-sm transition-all">Создать</button>
+                                </div>
+                                <div id="gift-result" class="hidden-view mt-3 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                                    <p class="text-green-400 text-sm font-bold">Код: <span id="gift-code-display" class="font-mono"></span></p>
+                                    <button onclick="copyGiftCode()" class="mt-1 text-xs text-neonBlue hover:text-white transition-colors">📋 Скопировать</button>
+                                </div>
+                            </div>
+                            <!-- Redeem Gift -->
+                            <div class="bg-white/5 rounded-xl p-4">
+                                <p class="text-white font-bold text-sm mb-2">Активировать подарок</p>
+                                <div class="flex gap-2">
+                                    <input type="text" id="gift-code-input" placeholder="GIFT-XXXXXXXX" class="flex-grow bg-darkBg border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-neonBlue focus:outline-none uppercase font-mono">
+                                    <button onclick="redeemGift()" class="bg-green-500/20 hover:bg-green-500/30 text-green-400 font-bold px-4 py-2 rounded-lg text-sm transition-all">Активировать</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GUIDE TAB -->
+                <div id="cab-tab-guide" class="hidden-view space-y-8 view-transition">
+                    <h2 class="text-3xl font-bold text-white">📖 Как подключить VPN</h2>
+                    <p class="text-gray-400">Выберите вашу операционную систему:</p>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <button onclick="showGuide('android')" class="glass-card rounded-2xl p-6 text-center hover:border-neonBlue/40 transition-all group">
+                            <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">🤖</div>
+                            <p class="text-white font-bold">Android</p>
+                            <p class="text-xs text-gray-400">V2rayNG</p>
+                        </button>
+                        <button onclick="showGuide('ios')" class="glass-card rounded-2xl p-6 text-center hover:border-neonBlue/40 transition-all group">
+                            <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">🍏</div>
+                            <p class="text-white font-bold">iOS</p>
+                            <p class="text-xs text-gray-400">Streisand</p>
+                        </button>
+                        <button onclick="showGuide('windows')" class="glass-card rounded-2xl p-6 text-center hover:border-neonBlue/40 transition-all group">
+                            <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">💻</div>
+                            <p class="text-white font-bold">Windows</p>
+                            <p class="text-xs text-gray-400">Hiddify</p>
+                        </button>
+                        <button onclick="showGuide('macos')" class="glass-card rounded-2xl p-6 text-center hover:border-neonBlue/40 transition-all group">
+                            <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">🍎</div>
+                            <p class="text-white font-bold">macOS</p>
+                            <p class="text-xs text-gray-400">Hiddify</p>
+                        </button>
+                    </div>
+
+                    <div id="guide-content" class="hidden-view glass-card rounded-2xl p-6 md:p-8 animate-fade-in-up"></div>
+                </div>
+
+                <!-- REFERRAL TAB -->
+                <div id="cab-tab-referral" class="hidden-view space-y-8 view-transition">
+                    <h2 class="text-3xl font-bold text-white">👥 Реферальная программа</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- My Code -->
+                        <div class="glass-card rounded-2xl p-6">
+                            <h3 class="text-gray-400 font-medium mb-4">Ваш реферальный код</h3>
+                            <div class="bg-white/5 border border-white/10 rounded-xl p-4 flex justify-between items-center">
+                                <span id="my-ref-code" class="text-2xl font-black text-white tracking-widest">NC-XXXXXX</span>
+                                <button onclick="copyRefCode()" class="text-neonBlue hover:text-white transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
+                                </button>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-4">Делитесь этим кодом с друзьями. Когда они активируют его, они получат скидку 10% на первую покупку!</p>
+                        </div>
+
+                        <!-- Apply Code -->
+                        <div class="glass-card rounded-2xl p-6">
+                            <h3 class="text-gray-400 font-medium mb-4">Активировать код пригласителя</h3>
+                            <div id="ref-status-applied" class="hidden-view flex items-center gap-2 text-green-400 font-bold mb-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+                                Скидка 10% активирована!
+                            </div>
+                            <div id="ref-apply-section" class="space-y-4">
+                                <input type="text" id="input-ref-code" placeholder="Введите код (например NC-123456)" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-neonBlue transition-all">
+                                <button onclick="applyReferral()" class="w-full bg-neonBlue/20 hover:bg-neonBlue/40 text-neonBlue font-bold py-3 rounded-xl transition-all">
+                                    АКТИВИРОВАТЬ
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BUY TAB -->
+                <div id="cab-tab-buy" class="hidden-view space-y-8 view-transition">
+                    <h2 class="text-3xl font-bold text-white">Выбор тарифа</h2>
+                    
+                    <div>
+                        <h3 class="text-gray-400 font-medium mb-4">Тип подписки</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <input type="radio" name="plan_type" id="type-standard" value="standard" class="hidden plan-radio" checked onchange="togglePlanType()">
+                            <label for="type-standard" class="glass-card rounded-xl p-4 cursor-pointer relative overflow-hidden group border border-white/10">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-blue-900/50 flex items-center justify-center text-neonBlue">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-white text-lg">Стандартный VPN</p>
+                                        <p class="text-xs text-gray-400">Обход блокировок, мульти-устройства</p>
+                                    </div>
+                                </div>
+                            </label>
+                            
+                            <input type="radio" name="plan_type" id="type-white" value="white" class="hidden plan-radio" onchange="togglePlanType()">
+                            <label for="type-white" class="glass-card rounded-xl p-4 cursor-pointer relative overflow-hidden group border border-white/10">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" /></svg>
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-white text-lg">Белый интернет</p>
+                                        <p class="text-xs text-gray-400">Чистый IP, максимальный траст</p>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-gray-400 font-medium mb-4">Период подписки</h3>
+                        <div class="grid grid-cols-3 gap-3 sm:gap-4">
+                            <input type="radio" name="duration" id="dur-30" value="30" class="hidden plan-radio" checked onchange="updatePrice()">
+                            <label for="dur-30" class="glass-card rounded-xl p-4 cursor-pointer text-center relative overflow-hidden group">
+                                <p class="text-2xl font-bold text-white mb-1">30</p>
+                                <p class="text-xs text-gray-400">Дней</p>
+                            </label>
+                            
+                            <input type="radio" name="duration" id="dur-60" value="60" class="hidden plan-radio" onchange="updatePrice()">
+                            <label for="dur-60" class="glass-card rounded-xl p-4 cursor-pointer text-center relative overflow-hidden group">
+                                <p class="text-2xl font-bold text-white mb-1">60</p>
+                                <p class="text-xs text-gray-400">Дней</p>
+                            </label>
+                            
+                            <input type="radio" name="duration" id="dur-90" value="90" class="hidden plan-radio" onchange="updatePrice()">
+                            <label for="dur-90" class="glass-card rounded-xl p-4 cursor-pointer text-center relative overflow-hidden group">
+                                <p class="text-2xl font-bold text-white mb-1">90</p>
+                                <p class="text-xs text-gray-400">Дней</p>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="devices-section">
+                        <h3 class="text-gray-400 font-medium mb-4">Количество устройств</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+                            <input type="radio" name="devices" id="dev-1" value="1" class="hidden plan-radio" checked onchange="updatePrice()">
+                            <label for="dev-1" class="glass-card rounded-xl p-3 cursor-pointer text-center flex flex-col justify-center items-center h-20">
+                                <span class="font-bold text-lg text-white">1</span>
+                                <span class="text-xs text-gray-400">Устройство</span>
+                            </label>
+
+                            <input type="radio" name="devices" id="dev-3" value="3" class="hidden plan-radio" onchange="updatePrice()">
+                            <label for="dev-3" class="glass-card rounded-xl p-3 cursor-pointer text-center flex flex-col justify-center items-center h-20">
+                                <span class="font-bold text-lg text-white">3</span>
+                                <span class="text-xs text-gray-400">Устройства</span>
+                            </label>
+
+                            <input type="radio" name="devices" id="dev-5" value="5" class="hidden plan-radio" onchange="updatePrice()">
+                            <label for="dev-5" class="glass-card rounded-xl p-3 cursor-pointer text-center flex flex-col justify-center items-center h-20">
+                                <span class="font-bold text-lg text-white">5</span>
+                                <span class="text-xs text-gray-400">Устройств</span>
+                            </label>
+
+                            <input type="radio" name="devices" id="dev-10" value="10" class="hidden plan-radio" onchange="updatePrice()">
+                            <label for="dev-10" class="glass-card rounded-xl p-3 cursor-pointer text-center flex flex-col justify-center items-center h-20">
+                                <span class="font-bold text-lg text-white">10</span>
+                                <span class="text-xs text-gray-400">Устройств</span>
+                            </label>
+
+                            <input type="radio" name="devices" id="dev-unlim" value="unlimited" class="hidden plan-radio" onchange="updatePrice()">
+                            <label for="dev-unlim" class="glass-card rounded-xl p-3 cursor-pointer text-center flex flex-col justify-center items-center h-20 col-span-2 md:col-span-1">
+                                <span class="font-bold text-xl text-white">∞</span>
+                                <span class="text-xs text-gray-400">Безлимит</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="glass-card border-neonBlue/30 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-center gap-6 mt-8">
+                        <div>
+                            <p class="text-gray-400 mb-1">Итого к оплате:</p>
+                             <div class="flex items-center gap-3">
+                                <div class="flex items-baseline gap-2">
+                                    <span class="text-gray-500 line-through text-xl hidden-view" id="old-price"></span>
+                                    <span class="text-4xl md:text-5xl font-extrabold text-white" id="total-price">149</span>
+                                    <span class="text-xl text-neonBlue">₽</span>
+                                </div>
+                                <div id="discount-badge" class="hidden-view px-3 py-1 bg-green-500/20 text-green-400 text-xs font-bold rounded-full border border-green-500/20 animate-pulse">
+                                    СКИДКА 10%
+                                </div>
+                             </div>
+                        </div>
+                        <button onclick="payWithPlatega()" class="w-full md:w-auto flex items-center justify-center gap-3 bg-white text-darkBg font-bold text-lg py-4 px-10 rounded-xl transition-all hover:scale-105 shadow-[0_0_20px_rgba(255,255,255,0.4)]">
+                            Оплатить (Platega)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- FORTUNE TAB -->
+                <div id="cab-tab-fortune" class="hidden-view space-y-8 view-transition">
+                    <h2 class="text-3xl font-bold text-white">🎡 Колесо фортуны</h2>
+                    <p class="text-gray-400">Приглашайте друзей через бот и получайте бесплатные дни к подписке!</p>
+                    
+                    <div id="fortune-not-linked" class="hidden-view glass-card rounded-2xl p-6 text-center">
+                        <p class="text-yellow-400 mb-2">⚠️ Аккаунт не привязан к боту</p>
+                        <p class="text-gray-400 text-sm">Используйте один и тот же email в боте и на сайте, чтобы связать аккаунты.</p>
+                    </div>
+
+                    <div id="fortune-content" class="hidden-view">
+                        <!-- Referral counter -->
+                        <div class="glass-card rounded-2xl p-6 mb-6 text-center">
+                            <p class="text-gray-400 text-sm mb-1">Ваши рефералы</p>
+                            <p class="text-4xl font-extrabold text-neonBlue" id="fortune-ref-count">0</p>
+                        </div>
+
+                        <!-- Milestones -->
+                        <div class="glass-card rounded-2xl p-6 mb-6">
+                            <h3 class="text-white font-bold mb-4">Майлстоуны</h3>
+                            <div class="flex flex-wrap gap-3 justify-center" id="milestones-container"></div>
+                        </div>
+
+                        <!-- Wheel -->
+                        <div class="glass-card rounded-2xl p-8" id="wheel-section">
+                            <div class="wheel-container mb-6">
+                                <div class="wheel-pointer"></div>
+                                <div class="wheel" id="fortune-wheel">
+                                    <!-- Labels added by JS -->
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <button onclick="spinFortuneWheel()" id="btn-spin" disabled class="bg-gray-600 text-gray-400 font-bold py-3 px-10 rounded-xl transition-all cursor-not-allowed">
+                                    КРУТИТЬ
+                                </button>
+                                <p class="text-xs text-gray-500 mt-2" id="spin-hint">Выберите доступный майлстоун для прокрутки</p>
+                            </div>
+                        </div>
+
+                        <!-- Prize popup -->
+                        <div id="prize-popup" class="fixed inset-0 bg-darkBg/90 backdrop-blur-sm z-50 hidden-view flex items-center justify-center">
+                            <div class="glass-card rounded-2xl p-10 text-center max-w-sm animate-fade-in-up border-t border-neonBlue/40">
+                                <div class="text-6xl mb-4">🎉</div>
+                                <h3 class="text-2xl font-bold text-white mb-2">Поздравляем!</h3>
+                                <p class="text-neonBlue text-3xl font-extrabold mb-4" id="prize-text">+5 дней</p>
+                                <p class="text-gray-400 text-sm mb-6">Дни добавлены к вашей подписке</p>
+                                <button onclick="closePrizePopup()" class="bg-neonBlue hover:bg-white text-darkBg font-bold py-3 px-8 rounded-xl transition-all">Отлично!</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ADMIN TAB -->
+                <div id="cab-tab-admin" class="hidden-view space-y-6 view-transition">
+                    <h2 class="text-3xl font-bold text-white">🛡 Админ-панель</h2>
+
+                    <!-- Admin sub-tabs -->
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <button onclick="switchAdminSub('stats')" id="adm-sub-stats" class="px-4 py-2 rounded-lg bg-neonBlue/10 text-neonBlue border border-neonBlue/20 text-sm font-bold transition-all">📊 Статистика</button>
+                        <button onclick="switchAdminSub('users')" id="adm-sub-users" class="px-4 py-2 rounded-lg text-gray-400 hover:bg-white/5 text-sm font-bold transition-all">🤖 Юзеры Бота</button>
+                        <button onclick="switchAdminSub('webusers')" id="adm-sub-webusers" class="px-4 py-2 rounded-lg text-gray-400 hover:bg-white/5 text-sm font-bold transition-all">🌐 Юзеры Сайта</button>
+                        <button onclick="switchAdminSub('payments')" id="adm-sub-payments" class="px-4 py-2 rounded-lg text-gray-400 hover:bg-white/5 text-sm font-bold transition-all">💳 Платежи</button>
+                        <button onclick="switchAdminSub('promos')" id="adm-sub-promos" class="px-4 py-2 rounded-lg text-gray-400 hover:bg-white/5 text-sm font-bold transition-all">🎟 Промокоды</button>
+                        <button onclick="switchAdminSub('spins')" id="adm-sub-spins" class="px-4 py-2 rounded-lg text-gray-400 hover:bg-white/5 text-sm font-bold transition-all">🎡 Спины</button>
+                    </div>
+
+                    <!-- STATS -->
+                    <div id="adm-panel-stats">
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <div class="glass-card rounded-xl p-5 text-center">
+                                <p class="text-xs text-gray-400 mb-1">Юзеры бота</p>
+                                <p class="text-2xl font-extrabold text-neonBlue" id="adm-stat-bot-users">—</p>
+                            </div>
+                            <div class="glass-card rounded-xl p-5 text-center">
+                                <p class="text-xs text-gray-400 mb-1">Юзеры сайта</p>
+                                <p class="text-2xl font-extrabold text-white" id="adm-stat-web-users">—</p>
+                            </div>
+                            <div class="glass-card rounded-xl p-5 text-center">
+                                <p class="text-xs text-gray-400 mb-1">Подписки</p>
+                                <p class="text-2xl font-extrabold text-green-400" id="adm-stat-subs">—</p>
+                            </div>
+                            <div class="glass-card rounded-xl p-5 text-center">
+                                <p class="text-xs text-gray-400 mb-1">Оплачено</p>
+                                <p class="text-2xl font-extrabold text-green-400" id="adm-stat-payments">—</p>
+                            </div>
+                            <div class="glass-card rounded-xl p-5 text-center">
+                                <p class="text-xs text-gray-400 mb-1">Выручка ₽</p>
+                                <p class="text-2xl font-extrabold text-yellow-400" id="adm-stat-revenue">—</p>
+                            </div>
+                            <div class="glass-card rounded-xl p-5 text-center">
+                                <p class="text-xs text-gray-400 mb-1">Ожидание</p>
+                                <p class="text-2xl font-extrabold text-orange-400" id="adm-stat-pending">—</p>
+                            </div>
+                            <div class="glass-card rounded-xl p-5 text-center">
+                                <p class="text-xs text-gray-400 mb-1">Промокоды</p>
+                                <p class="text-2xl font-extrabold text-purple-400" id="adm-stat-promos">—</p>
+                            </div>
+                            <div class="glass-card rounded-xl p-5 text-center">
+                                <p class="text-xs text-gray-400 mb-1">Спинов</p>
+                                <p class="text-2xl font-extrabold text-cyan-400" id="adm-stat-spins">—</p>
+                            </div>
+                            <div class="glass-card rounded-xl p-5 text-center">
+                                <p class="text-xs text-gray-400 mb-1">Забанено</p>
+                                <p class="text-2xl font-extrabold text-red-400" id="adm-stat-banned">—</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- USERS -->
+                    <div id="adm-panel-users" class="hidden-view">
+                        <div class="glass-card rounded-xl p-4 mb-4">
+                            <div class="flex gap-2">
+                                <input type="text" id="adm-user-search" placeholder="Поиск по ID, username, email..." class="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-neonBlue/50">
+                                <button onclick="loadAdminUsers()" class="bg-neonBlue text-darkBg font-bold px-4 py-2 rounded-lg text-sm">Найти</button>
+                            </div>
+                        </div>
+                        <div class="glass-card rounded-xl overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm">
+                                    <thead><tr class="border-b border-white/10 text-gray-400 text-xs">
+                                        <th class="p-3 text-left">ID</th><th class="p-3 text-left">Username</th><th class="p-3 text-left">Email</th>
+                                        <th class="p-3">Реф.</th><th class="p-3">Подп.</th><th class="p-3">Бан</th><th class="p-3">Действие</th>
+                                    </tr></thead>
+                                    <tbody id="adm-users-tbody" class="text-gray-300"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- WEB USERS -->
+                    <div id="adm-panel-webusers" class="hidden-view">
+                        <div class="glass-card rounded-xl overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm">
+                                    <thead><tr class="border-b border-white/10 text-gray-400 text-xs">
+                                        <th class="p-3 text-left">Email</th><th class="p-3 text-left">Password</th>
+                                        <th class="p-3">Подписка</th><th class="p-3">Устр.</th>
+                                    </tr></thead>
+                                    <tbody id="adm-webusers-tbody" class="text-gray-300"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PAYMENTS -->
+                    <div id="adm-panel-payments" class="hidden-view">
+                        <div class="glass-card rounded-xl p-4 mb-4 flex gap-2">
+                            <button onclick="loadAdminPayments('')" class="px-3 py-1 rounded-lg bg-white/5 text-gray-300 text-xs hover:bg-white/10">Все</button>
+                            <button onclick="loadAdminPayments('completed')" class="px-3 py-1 rounded-lg bg-green-900/30 text-green-400 text-xs hover:bg-green-900/50">Оплачено</button>
+                            <button onclick="loadAdminPayments('pending')" class="px-3 py-1 rounded-lg bg-yellow-900/30 text-yellow-400 text-xs hover:bg-yellow-900/50">Ожидание</button>
+                        </div>
+                        <div class="glass-card rounded-xl overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm">
+                                    <thead><tr class="border-b border-white/10 text-gray-400 text-xs">
+                                        <th class="p-3 text-left">#</th><th class="p-3 text-left">Email</th><th class="p-3">Сумма</th>
+                                        <th class="p-3">Дни</th><th class="p-3">Устр.</th><th class="p-3">Статус</th>
+                                    </tr></thead>
+                                    <tbody id="adm-payments-tbody" class="text-gray-300"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PROMOS -->
+                    <div id="adm-panel-promos" class="hidden-view">
+                        <div class="glass-card rounded-xl p-4 mb-4">
+                            <h3 class="text-white font-bold mb-3">Создать промокод</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                                <input type="text" id="adm-promo-code" placeholder="Код" class="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-neonBlue/50">
+                                <input type="number" id="adm-promo-days" placeholder="Дней" min="1" class="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-neonBlue/50">
+                                <input type="number" id="adm-promo-max" placeholder="Лимит (0=∞)" min="0" class="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-neonBlue/50">
+                                <button onclick="createAdminPromo()" class="bg-neonBlue text-darkBg font-bold py-2 rounded-lg text-sm">Создать</button>
+                            </div>
+                        </div>
+                        <div class="glass-card rounded-xl overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm">
+                                    <thead><tr class="border-b border-white/10 text-gray-400 text-xs">
+                                        <th class="p-3 text-left">Код</th><th class="p-3">Дней</th><th class="p-3">Исп./Лимит</th>
+                                        <th class="p-3">Активен</th><th class="p-3">Действие</th>
+                                    </tr></thead>
+                                    <tbody id="adm-promos-tbody" class="text-gray-300"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FORTUNE SPINS -->
+                    <div id="adm-panel-spins" class="hidden-view">
+                        <div class="glass-card rounded-xl overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm">
+                                    <thead><tr class="border-b border-white/10 text-gray-400 text-xs">
+                                        <th class="p-3 text-left">Юзер</th><th class="p-3">Майлстоун</th>
+                                        <th class="p-3">Приз</th><th class="p-3 text-left">Дата</th>
+                                    </tr></thead>
+                                    <tbody id="adm-spins-tbody" class="text-gray-300"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- AUTH MODAL -->
+    <div id="auth-modal" class="fixed inset-0 bg-darkBg/80 backdrop-blur-sm z-50 flex items-center justify-center hidden-view p-4">
+        <div class="glass-card rounded-2xl w-full max-w-md relative overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.8)] border-t border-neonBlue/40">
+            <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white z-10">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+
+            <!-- Tabs -->
+            <div class="flex border-b border-white/10">
+                <button id="tab-login-btn" onclick="switchAuthTab('login')" class="flex-1 py-4 text-center font-semibold text-neonBlue border-b-2 border-neonBlue transition-all">Вход</button>
+                <button id="tab-register-btn" onclick="switchAuthTab('register')" class="flex-1 py-4 text-center font-semibold text-gray-400 border-b-2 border-transparent hover:text-white transition-all">Регистрация</button>
+            </div>
+
+            <div class="p-8 sm:p-10 relative z-10">
+                
+                <!-- LOGIN FORM -->
+                <div id="auth-login-form">
+                    <div class="mb-6 text-center">
+                        <h2 class="text-2xl font-bold text-white mb-2">С возвращением</h2>
+                        <p class="text-gray-400 text-sm">Войдите в свой личный кабинет</p>
+                    </div>
+                    <form onsubmit="submitLogin(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Email</label>
+                            <input type="email" id="login-email" required placeholder="your@email.com" class="block w-full px-4 py-3 bg-darkBg/90 border border-gray-700 rounded-xl text-white placeholder-gray-500 input-glow transition-all font-mono text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Пароль</label>
+                            <input type="password" id="login-password" required placeholder="••••••••" class="block w-full px-4 py-3 bg-darkBg/90 border border-gray-700 rounded-xl text-white placeholder-gray-500 input-glow transition-all font-mono text-sm">
+                        </div>
+                        <p id="login-error" class="text-red-400 text-xs hidden-view"></p>
+                        <button type="submit" class="w-full py-3.5 mt-2 bg-neonBlue hover:bg-white text-darkBg font-bold rounded-xl shadow-[0_0_15px_rgba(0,240,255,0.4)] transition-all">
+                            ВОЙТИ
+                        </button>
+                    </form>
+                </div>
+
+                <!-- REGISTER FORM -->
+                <div id="auth-register-form" class="hidden-view">
+                    <div class="mb-6 text-center">
+                        <h2 class="text-2xl font-bold text-white mb-2">Создать аккаунт</h2>
+                        <p class="text-gray-400 text-sm">Присоединяйтесь к Node Connect</p>
+                    </div>
+                    <form onsubmit="submitRegister(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Email</label>
+                            <input type="email" id="reg-email" required placeholder="your@email.com" class="block w-full px-4 py-3 bg-darkBg/90 border border-gray-700 rounded-xl text-white placeholder-gray-500 input-glow transition-all font-mono text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Пароль</label>
+                            <input type="password" id="reg-password" required placeholder="Минимум 8 символов" class="block w-full px-4 py-3 bg-darkBg/90 border border-gray-700 rounded-xl text-white placeholder-gray-500 input-glow transition-all font-mono text-sm">
+                        </div>
+                        <ul id="password-reqs" class="text-xs text-gray-400 space-y-1">
+                            <li id="req-len" class="flex items-center gap-1">❌ Минимум 8 символов</li>
+                            <li id="req-letter" class="flex items-center gap-1">❌ Содержит буквы</li>
+                            <li id="req-complex" class="flex items-center gap-1">❌ Не слишком простой (напр. 123123)</li>
+                        </ul>
+                        <p id="reg-error" class="text-red-400 text-xs hidden-view"></p>
+                        <button type="submit" id="btn-register" disabled class="w-full py-3.5 mt-2 bg-gray-600 text-gray-400 font-bold rounded-xl transition-all cursor-not-allowed">
+                            ЗАРЕГИСТРИРОВАТЬСЯ
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <div id="modal-loader" class="absolute inset-0 bg-darkBg/80 backdrop-blur-sm z-20 hidden-view flex-col items-center justify-center rounded-2xl">
+                <div class="w-10 h-10 border-2 border-gray-600 border-t-neonBlue rounded-full animate-spin mb-3"></div>
+                <p class="text-neonBlue text-sm font-mono tracking-widest animate-pulse">ОБРАБОТКА...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN JS -->
+    <script>
+        const API_URL = '/api';
+        const pricing = {
+            standard: {
+                30: { 1: 149, 3: 219, 5: 279, 10: 399, 'unlimited': 799 },
+                60: { 1: 249, 3: 319, 5: 399, 10: 599, 'unlimited': 999 },
+                90: { 1: 349, 3: 419, 5: 579, 10: 799, 'unlimited': 1599 }
+            },
+            white: {
+                30: 399,
+                60: 699,
+                90: 849
+            }
+        };
+        
+        let currentUser = null;
+        let token = localStorage.getItem('vpn_token');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (token) fetchUserData();
+            else showView('landing');
+            updatePrice();
+            setupPasswordValidation();
+        });
+
+        function showView(viewName) {
+            document.getElementById('view-landing').classList.add('hidden-view');
+            document.getElementById('view-cabinet').classList.add('hidden-view');
+            document.getElementById(`view-${viewName}`).classList.remove('hidden-view');
+            
+            if(viewName === 'cabinet') {
+                document.getElementById('header-auth-buttons').classList.add('hidden-view');
+                document.getElementById('header-user-menu').classList.remove('hidden-view');
+                switchCabinetTab('dashboard');
+            } else {
+                document.getElementById('header-auth-buttons').classList.remove('hidden-view');
+                document.getElementById('header-user-menu').classList.add('hidden-view');
+            }
+        }
+
+        function switchCabinetTab(tabName) {
+            const tabs = ['dashboard', 'buy', 'fortune', 'referral', 'guide', 'admin'];
+            const inactiveClass = "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition-all";
+            const activeClass = "w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-neonBlue/10 text-neonBlue border border-neonBlue/20 transition-all";
+            
+            tabs.forEach(t => {
+                const panel = document.getElementById('cab-tab-' + t);
+                const btn = document.getElementById('tab-' + t);
+                if (panel) panel.classList.add('hidden-view');
+                if (btn && !btn.classList.contains('hidden-view')) {
+                    btn.className = inactiveClass + (t === 'admin' ? ' border-t border-red-500/20 mt-2 pt-4' : '');
+                }
+            });
+
+            document.getElementById('cab-tab-' + tabName).classList.remove('hidden-view');
+            const activeBtn = document.getElementById('tab-' + tabName);
+            if (activeBtn) activeBtn.className = activeClass + (tabName === 'admin' ? ' border-t border-red-500/20 mt-2 pt-4' : '');
+
+            if (tabName === 'fortune') loadFortuneData();
+            if (tabName === 'admin') loadAdminStats();
+        }
+
+        function togglePlanType() {
+            const planType = document.querySelector('input[name="plan_type"]:checked').value;
+            const devSection = document.getElementById('devices-section');
+            if(planType === 'white') {
+                devSection.classList.add('hidden-view');
+            } else {
+                devSection.classList.remove('hidden-view');
+            }
+            updatePrice();
+        }
+
+        function updatePrice() {
+            const planType = document.querySelector('input[name="plan_type"]:checked').value;
+            const dur = document.querySelector('input[name="duration"]:checked').value;
+            
+            let price = 0;
+            if(planType === 'white') {
+                price = pricing.white[dur];
+            } else {
+                const dev = document.querySelector('input[name="devices"]:checked').value;
+                price = pricing.standard[dur][dev];
+            }
+
+            const oldPriceEl = document.getElementById('old-price');
+            const discountBadge = document.getElementById('discount-badge');
+
+            // Apply 10% discount if user was referred
+            if (currentUser && currentUser.is_referred) {
+                const discountedPrice = Math.floor(price * 0.9);
+                oldPriceEl.innerText = price;
+                oldPriceEl.classList.remove('hidden-view');
+                discountBadge.classList.remove('hidden-view');
+                document.getElementById('total-price').innerText = discountedPrice;
+            } else {
+                oldPriceEl.classList.add('hidden-view');
+                discountBadge.classList.add('hidden-view');
+                document.getElementById('total-price').innerText = price;
+            }
+        }
+
+        async function applyReferral() {
+            const code = document.getElementById('input-ref-code').value.trim();
+            if (!code) return;
+
+            try {
+                const res = await fetch(`${API_URL}/referral/apply`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ code })
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    showToast('🎉 ' + data.message, 'success');
+                    fetchUserData(); 
+                    updatePrice();
+                } else {
+                    showToast(data.detail || 'Ошибка при активации кода', 'error');
+                }
+            } catch (e) {
+                showToast('Ошибка сети', 'error');
+            }
+        }
+
+        function copyRefCode() {
+            const code = document.getElementById('my-ref-code').innerText;
+            navigator.clipboard.writeText(code);
+            showToast('Код скопирован!', 'success');
+        }
+
+        /* --- AUTH FLOW --- */
+        function openAuthModal() {
+            if(token) return showView('cabinet');
+            document.getElementById('auth-modal').classList.remove('hidden-view');
+            switchAuthTab('login');
+        }
+
+        function closeAuthModal() {
+            document.getElementById('auth-modal').classList.add('hidden-view');
+        }
+
+        function switchAuthTab(tab) {
+            const loginForm = document.getElementById('auth-login-form');
+            const regForm = document.getElementById('auth-register-form');
+            const loginBtn = document.getElementById('tab-login-btn');
+            const regBtn = document.getElementById('tab-register-btn');
+
+            if(tab === 'login') {
+                loginForm.classList.remove('hidden-view');
+                regForm.classList.add('hidden-view');
+                loginBtn.className = "flex-1 py-4 text-center font-semibold text-neonBlue border-b-2 border-neonBlue transition-all";
+                regBtn.className = "flex-1 py-4 text-center font-semibold text-gray-400 border-b-2 border-transparent hover:text-white transition-all";
+            } else {
+                loginForm.classList.add('hidden-view');
+                regForm.classList.remove('hidden-view');
+                regBtn.className = "flex-1 py-4 text-center font-semibold text-neonBlue border-b-2 border-neonBlue transition-all";
+                loginBtn.className = "flex-1 py-4 text-center font-semibold text-gray-400 border-b-2 border-transparent hover:text-white transition-all";
+            }
+            
+            document.getElementById('login-error').classList.add('hidden-view');
+            document.getElementById('reg-error').classList.add('hidden-view');
+        }
+
+        function toggleModalLoader(show) {
+            const l = document.getElementById('modal-loader');
+            if(show) { l.classList.remove('hidden-view'); l.classList.add('flex'); }
+            else { l.classList.add('hidden-view'); l.classList.remove('flex'); }
+        }
+
+        /* Password Validation */
+        function setupPasswordValidation() {
+            const pwInput = document.getElementById('reg-password');
+            const btnReg = document.getElementById('btn-register');
+            const badPasswords = ['123123123', '12345678', 'qwertyuiop', 'password'];
+
+            pwInput.addEventListener('input', (e) => {
+                const val = e.target.value;
+                let isValid = true;
+                
+                // Length
+                if(val.length >= 8) {
+                    document.getElementById('req-len').innerHTML = '✅ Минимум 8 символов';
+                    document.getElementById('req-len').classList.replace('text-red-400', 'text-green-400') || document.getElementById('req-len').classList.add('text-green-400');
+                } else {
+                    document.getElementById('req-len').innerHTML = '❌ Минимум 8 символов';
+                    document.getElementById('req-len').classList.replace('text-green-400', 'text-gray-400');
+                    isValid = false;
+                }
+                
+                // Letters
+                if(/[a-zA-Zа-яА-Я]/.test(val)) {
+                    document.getElementById('req-letter').innerHTML = '✅ Содержит буквы';
+                    document.getElementById('req-letter').classList.replace('text-red-400', 'text-green-400') || document.getElementById('req-letter').classList.add('text-green-400');
+                } else {
+                    document.getElementById('req-letter').innerHTML = '❌ Содержит буквы';
+                    document.getElementById('req-letter').classList.replace('text-green-400', 'text-gray-400');
+                    isValid = false;
+                }
+                
+                // Complexity (not in bad list and >2 unique chars)
+                const uniqueChars = new Set(val).size;
+                if(!badPasswords.includes(val.toLowerCase()) && uniqueChars > 2 && isNaN(val)) {
+                    document.getElementById('req-complex').innerHTML = '✅ Достаточно сложный';
+                    document.getElementById('req-complex').classList.replace('text-red-400', 'text-green-400') || document.getElementById('req-complex').classList.add('text-green-400');
+                } else {
+                    document.getElementById('req-complex').innerHTML = '❌ Не слишком простой (напр. 123123)';
+                    document.getElementById('req-complex').classList.replace('text-green-400', 'text-gray-400');
+                    isValid = false;
+                }
+
+                if(isValid) {
+                    btnReg.disabled = false;
+                    btnReg.className = "w-full py-3.5 mt-2 bg-neonBlue hover:bg-white text-darkBg font-bold rounded-xl shadow-[0_0_15px_rgba(0,240,255,0.4)] transition-all cursor-pointer";
+                } else {
+                    btnReg.disabled = true;
+                    btnReg.className = "w-full py-3.5 mt-2 bg-gray-600 text-gray-400 font-bold rounded-xl transition-all cursor-not-allowed";
+                }
+            });
+        }
+
+        async function submitLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+            
+            toggleModalLoader(true);
+            try {
+                const res = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await res.json();
+                if(!res.ok) throw new Error(data.detail || "Ошибка входа");
+                
+                token = data.access_token;
+                localStorage.setItem('vpn_token', token);
+                
+                closeAuthModal();
+                fetchUserData();
+            } catch(err) {
+                const errEl = document.getElementById('login-error');
+                errEl.innerText = err.message;
+                errEl.classList.remove('hidden-view');
+            } finally {
+                toggleModalLoader(false);
+            }
+        }
+
+        async function submitRegister(e) {
+            e.preventDefault();
+            const email = document.getElementById('reg-email').value.trim();
+            const password = document.getElementById('reg-password').value;
+            
+            toggleModalLoader(true);
+            try {
+                const res = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await res.json();
+                if(!res.ok) throw new Error(data.detail || "Ошибка регистрации");
+                
+                token = data.access_token;
+                localStorage.setItem('vpn_token', token);
+                
+                closeAuthModal();
+                fetchUserData();
+            } catch(err) {
+                const errEl = document.getElementById('reg-error');
+                errEl.innerText = err.message;
+                errEl.classList.remove('hidden-view');
+            } finally {
+                toggleModalLoader(false);
+            }
+        }
+
+        function logout() {
+            token = null;
+            currentUser = null;
+            localStorage.removeItem('vpn_token');
+            showView('landing');
+        }
+
+        /* Dashboard Data */
+        async function fetchUserData() {
+            if(!token) return showView('landing');
+            
+            try {
+                const res = await fetch(`${API_URL}/users/me`, {
+                    headers: {'Authorization': `Bearer ${token}`}
+                });
+                
+                if(!res.ok) throw new Error("Invalid token");
+                currentUser = await res.json();
+                
+                document.getElementById('header-email').innerText = currentUser.email;
+                document.getElementById('cab-email').innerText = currentUser.email;
+                document.getElementById('user-initial').innerText = currentUser.email[0].toUpperCase();
+                
+                // Referral display
+                if (document.getElementById('my-ref-code')) {
+                    document.getElementById('my-ref-code').innerText = currentUser.referral_code || '---';
+                }
+                if (currentUser.is_referred) {
+                    document.getElementById('ref-status-applied')?.classList.remove('hidden-view');
+                    document.getElementById('ref-apply-section')?.classList.add('hidden-view');
+                }
+                
+                if(currentUser.has_active_subscription) {
+                    document.getElementById('status-indicator').className = "w-3 h-3 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.8)]";
+                    document.getElementById('status-text').innerText = "Активна";
+                    document.getElementById('status-text').className = "text-2xl font-bold text-green-400";
+                    document.getElementById('expiry-date').innerText = new Date(currentUser.subscription_end * 1000).toLocaleDateString('ru-RU');
+                    document.getElementById('devices-count').innerText = `1 / ${currentUser.device_limit === 9999 ? '∞' : currentUser.device_limit}`;
+                    
+                    document.getElementById('key-section').classList.remove('hidden-view');
+                    document.getElementById('user-vpn-key').innerText = currentUser.sub_url;
+                    
+                    document.getElementById('action-title').innerText = "Продлить подписку";
+                    document.getElementById('action-desc').innerText = "Ваш VPN работает отлично. Вы можете продлить период в любое время.";
+                    
+                    // Days remaining countdown
+                    const now = Math.floor(Date.now() / 1000);
+                    const diff = currentUser.subscription_end - now;
+                    const daysLeft = Math.max(0, Math.ceil(diff / 86400));
+                    document.getElementById('stat-days-left').innerText = `${daysLeft} дн.`;
+                    
+                    // Traffic stats section
+                    document.getElementById('traffic-section').classList.remove('hidden-view');
+                    
+                    // Fetch traffic from Marzban via backend
+                    try {
+                        const tRes = await fetch(`${API_URL}/users/me/traffic`, {
+                            headers: {'Authorization': `Bearer ${token}`}
+                        });
+                        if (tRes.ok) {
+                            const traffic = await tRes.json();
+                            document.getElementById('stat-download').innerText = formatBytes(traffic.download);
+                            document.getElementById('stat-upload').innerText = formatBytes(traffic.upload);
+                            document.getElementById('stat-online').innerText = traffic.online_at ? '🟢' : '⚪';
+                        }
+                    } catch(e) { console.log('Traffic stats unavailable'); }
+                    
+                    // Reset QR on data refresh
+                    qrGenerated = false;
+                    
+                } else {
+                    document.getElementById('status-indicator').className = "w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)]";
+                    document.getElementById('status-text').innerText = "Неактивна";
+                    document.getElementById('status-text').className = "text-2xl font-bold text-white";
+                    document.getElementById('expiry-date').innerText = "—";
+                    document.getElementById('devices-count').innerText = "0 / 0";
+                    
+                    document.getElementById('key-section').classList.add('hidden-view');
+                    document.getElementById('traffic-section').classList.add('hidden-view');
+                }
+                
+                showView('cabinet');
+                
+                // Check if user is admin
+                checkAdminAccess();
+            } catch(e) {
+                console.error(e);
+                logout();
+            }
+        }
+
+
+        async function payWithPlatega() {
+            const planType = document.querySelector('input[name="plan_type"]:checked').value;
+            const dur = document.querySelector('input[name="duration"]:checked').value;
+            const dev = planType === 'white' ? 1 : document.querySelector('input[name="devices"]:checked').value; // Default to 1 device for white internet
+            
+            try {
+                const res = await fetch(`${API_URL}/payments/create`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ 
+                        plan_type: planType, 
+                        duration_days: parseInt(dur), 
+                        devices_count: dev === 'unlimited' ? 9999 : parseInt(dev) 
+                    })
+                });
+                
+                if(!res.ok) throw new Error("Payment error");
+                const data = await res.json();
+                
+                if(data.payment_url) {
+                    window.location.href = data.payment_url;
+                } else {
+                    showToast('Ошибка при получении ссылки на оплату', 'error');
+                }
+            } catch(e) {
+                showToast(e.message || 'Ошибка оплаты', 'error');
+            }
+        }
+
+        function copyVpnKey() {
+            const t = document.getElementById('user-vpn-key').innerText;
+            navigator.clipboard.writeText(t).then(() => {
+                showToast('Ключ скопирован!', 'success');
+            });
+        }
+
+        let qrGenerated = false;
+        function toggleQrCode() {
+            const section = document.getElementById('qr-section');
+            if (section.classList.contains('hidden-view')) {
+                section.classList.remove('hidden-view');
+                if (!qrGenerated && currentUser && currentUser.sub_url) {
+                    const container = document.getElementById('qr-code');
+                    container.innerHTML = '';
+                    new QRCode(container, {
+                        text: currentUser.sub_url,
+                        width: 200,
+                        height: 200,
+                        colorDark: '#0a0a1a',
+                        colorLight: '#ffffff',
+                        correctLevel: QRCode.CorrectLevel.M
+                    });
+                    qrGenerated = true;
+                }
+            } else {
+                section.classList.add('hidden-view');
+            }
+        }
+
+        function formatBytes(bytes) {
+            if (!bytes || bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        const GUIDES = {
+            android: {
+                title: '🤖 Android — V2rayNG',
+                steps: [
+                    { n: 1, t: 'Скачайте <b>V2rayNG</b>', d: 'Откройте <a href="https://play.google.com/store/apps/details?id=com.v2ray.ang" target="_blank" class="text-neonBlue underline">Google Play</a> и установите приложение V2rayNG.' },
+                    { n: 2, t: 'Скопируйте ключ', d: 'Перейдите в <b>Главная → Ключ доступа</b> и нажмите «Копировать» или отсканируйте QR-код.' },
+                    { n: 3, t: 'Добавьте сервер', d: 'В V2rayNG нажмите <b>+</b> → «Импорт из буфера обмена». Или нажмите иконку QR-кода и отсканируйте.' },
+                    { n: 4, t: 'Подключитесь', d: 'Выберите добавленный сервер и нажмите большую кнопку <b>▶ Подключить</b> внизу.' },
+                    { n: 5, t: 'Готово! ✅', d: 'Вы в безопасности. Проверьте IP на <a href="https://whoer.net" target="_blank" class="text-neonBlue underline">whoer.net</a>' }
+                ]
+            },
+            ios: {
+                title: '🍏 iOS — Streisand',
+                steps: [
+                    { n: 1, t: 'Скачайте <b>Streisand</b>', d: 'Откройте <a href="https://apps.apple.com/app/streisand/id6450534064" target="_blank" class="text-neonBlue underline">App Store</a> и установите приложение.' },
+                    { n: 2, t: 'Скопируйте ключ', d: 'Перейдите в <b>Главная → Ключ доступа</b> и нажмите «Копировать» или отсканируйте QR-код.' },
+                    { n: 3, t: 'Добавьте сервер', d: 'В Streisand нажмите <b>+</b> → «Добавить из буфера обмена». Ключ добавится автоматически.' },
+                    { n: 4, t: 'Подключитесь', d: 'Включите переключатель VPN. При первом запуске iOS попросит разрешение — нажмите «Разрешить».' },
+                    { n: 5, t: 'Готово! ✅', d: 'Ваш интернет защищён. Проверьте на <a href="https://whoer.net" target="_blank" class="text-neonBlue underline">whoer.net</a>' }
+                ]
+            },
+            windows: {
+                title: '💻 Windows — Hiddify',
+                steps: [
+                    { n: 1, t: 'Скачайте <b>Hiddify</b>', d: 'Скачайте с <a href="https://github.com/hiddify/hiddify-app/releases/latest" target="_blank" class="text-neonBlue underline">GitHub</a> версию для Windows (.exe).' },
+                    { n: 2, t: 'Установите', d: 'Запустите скачанный файл и следуйте инструкциям установки.' },
+                    { n: 3, t: 'Скопируйте ключ', d: 'На сайте нажмите «Копировать» рядом с ключом доступа.' },
+                    { n: 4, t: 'Добавьте профиль', d: 'В Hiddify нажмите <b>+</b> → «Добавить профиль из буфера обмена».' },
+                    { n: 5, t: 'Подключитесь', d: 'Нажмите кнопку подключения. Готово! ✅' }
+                ]
+            },
+            macos: {
+                title: '🍎 macOS — Hiddify',
+                steps: [
+                    { n: 1, t: 'Скачайте <b>Hiddify</b>', d: 'Скачайте с <a href="https://github.com/hiddify/hiddify-app/releases/latest" target="_blank" class="text-neonBlue underline">GitHub</a> версию для macOS (.dmg).' },
+                    { n: 2, t: 'Установите', d: 'Откройте .dmg и перетащите Hiddify в папку Applications.' },
+                    { n: 3, t: 'Скопируйте ключ', d: 'На сайте нажмите «Копировать» рядом с ключом доступа.' },
+                    { n: 4, t: 'Добавьте профиль', d: 'В Hiddify нажмите <b>+</b> → «Добавить из буфера».' },
+                    { n: 5, t: 'Подключитесь', d: 'Нажмите кнопку подключения. macOS попросит разрешение — подтвердите. Готово! ✅' }
+                ]
+            }
+        };
+
+        function showGuide(os) {
+            const guide = GUIDES[os];
+            if (!guide) return;
+            const container = document.getElementById('guide-content');
+            container.innerHTML = `
+                <h3 class="text-xl font-bold text-white mb-6">${guide.title}</h3>
+                <div class="space-y-4">
+                    ${guide.steps.map(s => `
+                        <div class="flex gap-4 items-start">
+                            <div class="w-8 h-8 rounded-full bg-neonBlue/20 flex items-center justify-center text-neonBlue font-bold text-sm flex-shrink-0 mt-1">${s.n}</div>
+                            <div>
+                                <p class="text-white font-bold">${s.t}</p>
+                                <p class="text-gray-400 text-sm mt-1">${s.d}</p>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            container.classList.remove('hidden-view');
+        }
+
+        // ==================== GIFT CERTIFICATES ====================
+
+        async function createGift() {
+            const daysInput = document.getElementById('gift-days-input');
+            const days = parseInt(daysInput.value);
+            if (!days || days < 1 || days > 90) {
+                showToast('Введите дни от 1 до 90', 'error');
+                return;
+            }
+            try {
+                const res = await fetch(`${API_URL}/gifts/create`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ days })
+                });
+                if (!res.ok) {
+                    const err = await res.json();
+                    showToast(err.detail || 'Ошибка', 'error');
+                    return;
+                }
+                const data = await res.json();
+                document.getElementById('gift-code-display').innerText = data.code;
+                document.getElementById('gift-result').classList.remove('hidden-view');
+                showToast(`Подарочный код создан: ${data.code}`, 'success');
+                daysInput.value = '';
+            } catch(e) {
+                showToast('Ошибка сети', 'error');
+            }
+        }
+
+        async function redeemGift() {
+            const codeInput = document.getElementById('gift-code-input');
+            const code = codeInput.value.trim();
+            if (!code) {
+                showToast('Введите код подарка', 'error');
+                return;
+            }
+            try {
+                const res = await fetch(`${API_URL}/gifts/redeem`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ code })
+                });
+                if (!res.ok) {
+                    const err = await res.json();
+                    showToast(err.detail || 'Ошибка', 'error');
+                    return;
+                }
+                const data = await res.json();
+                showToast(`🎁 ${data.message}`, 'success');
+                codeInput.value = '';
+                fetchUserData(); // Refresh dashboard
+            } catch(e) {
+                showToast('Ошибка сети', 'error');
+            }
+        }
+
+        function copyGiftCode() {
+            const code = document.getElementById('gift-code-display').innerText;
+            navigator.clipboard.writeText(code).then(() => {
+                showToast('Код скопирован!', 'success');
+            });
+        }
+
+        // ==================== ADMIN PANEL JS ====================
+
+        let isAdmin = false;
+
+        async function checkAdminAccess() {
+            try {
+                const res = await fetch(API_URL + '/admin/check', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                isAdmin = data.is_admin;
+                const adminTab = document.getElementById('tab-admin');
+                if (isAdmin) {
+                    adminTab.classList.remove('hidden-view');
+                } else {
+                    adminTab.classList.add('hidden-view');
+                }
+            } catch (e) {
+                console.error('Admin check error:', e);
+            }
+        }
+
+        function switchAdminSub(sub) {
+            const subs = ['stats', 'users', 'webusers', 'payments', 'promos', 'spins'];
+            subs.forEach(s => {
+                const panel = document.getElementById('adm-panel-' + s);
+                const btn = document.getElementById('adm-sub-' + s);
+                if (panel) panel.classList.add('hidden-view');
+                if (btn) btn.className = 'px-4 py-2 rounded-lg text-gray-400 hover:bg-white/5 text-sm font-bold transition-all';
+            });
+            document.getElementById('adm-panel-' + sub).classList.remove('hidden-view');
+            document.getElementById('adm-sub-' + sub).className = 'px-4 py-2 rounded-lg bg-neonBlue/10 text-neonBlue border border-neonBlue/20 text-sm font-bold transition-all';
+
+            if (sub === 'stats') loadAdminStats();
+            if (sub === 'users') loadAdminUsers();
+            if (sub === 'webusers') loadAdminWebUsers();
+            if (sub === 'payments') loadAdminPayments('');
+            if (sub === 'promos') loadAdminPromos();
+            if (sub === 'spins') loadAdminSpins();
+        }
+
+        async function loadAdminWebUsers() {
+            try {
+                const res = await fetch(API_URL + '/admin/web-users', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const data = await res.json();
+                const tbody = document.getElementById('adm-webusers-tbody');
+                tbody.innerHTML = '';
+                data.users.forEach(u => {
+                    const subText = u.subscription_end > Date.now() / 1000 ? '✅ Активна' : '❌ Нет';
+                    tbody.innerHTML += `<tr class="border-b border-white/5 hover:bg-white/5">
+                        <td class="p-3 text-white font-bold">${u.email}</td>
+                        <td class="p-3 font-mono text-sm text-yellow-400/80 break-all select-all">${u.password_plain || '<span class="text-[10px] text-gray-500 italic">Скрыт (Hash)</span>'}</td>
+                        <td class="p-3 text-center">${subText}</td>
+                        <td class="p-3 text-center">${u.device_limit}</td>
+                    </tr>`;
+                });
+                if (!data.users.length) tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-gray-500">Нет пользователей</td></tr>';
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadAdminStats() {
+            if (!isAdmin) return;
+            try {
+                const res = await fetch(API_URL + '/admin/stats', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const d = await res.json();
+                document.getElementById('adm-stat-bot-users').textContent = d.bot_users;
+                document.getElementById('adm-stat-web-users').textContent = d.web_users;
+                document.getElementById('adm-stat-subs').textContent = d.active_subs;
+                document.getElementById('adm-stat-payments').textContent = d.completed_payments;
+                document.getElementById('adm-stat-revenue').textContent = d.total_revenue.toLocaleString();
+                document.getElementById('adm-stat-pending').textContent = d.pending_payments;
+                document.getElementById('adm-stat-promos').textContent = d.active_promos;
+                document.getElementById('adm-stat-spins').textContent = d.total_spins;
+                document.getElementById('adm-stat-banned').textContent = d.banned_users;
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadAdminUsers() {
+            const search = document.getElementById('adm-user-search')?.value || '';
+            try {
+                const res = await fetch(API_URL + `/admin/users?search=${encodeURIComponent(search)}&limit=50`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const data = await res.json();
+                const tbody = document.getElementById('adm-users-tbody');
+                tbody.innerHTML = '';
+                data.users.forEach(u => {
+                    const banClass = u.is_banned ? 'text-red-400' : 'text-green-400';
+                    const banText = u.is_banned ? 'Да' : 'Нет';
+                    const banBtn = u.is_banned ? '🔓 Разбан' : '🔨 Бан';
+                    const btnColor = u.is_banned ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400';
+                    tbody.innerHTML += `<tr class="border-b border-white/5 hover:bg-white/5">
+                        <td class="p-3 font-mono text-xs">${u.user_id}</td>
+                        <td class="p-3">@${u.username || '—'}</td>
+                        <td class="p-3 text-xs">${u.email || '—'}</td>
+                        <td class="p-3 text-center">${u.ref_count}</td>
+                        <td class="p-3 text-center">${u.sub_count}</td>
+                        <td class="p-3 text-center ${banClass}">${banText}</td>
+                        <td class="p-3 text-center">
+                            <button onclick="toggleAdminBan(${u.user_id})" class="${btnColor} px-2 py-1 rounded text-xs">${banBtn}</button>
+                        </td>
+                    </tr>`;
+                });
+                if (!data.users.length) tbody.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-gray-500">Нет пользователей</td></tr>';
+            } catch (e) { console.error(e); }
+        }
+
+        async function toggleAdminBan(userId) {
+            try {
+                const res = await fetch(API_URL + `/admin/users/${userId}/ban`, {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (!res.ok) throw new Error('Ошибка сервера');
+                const d = await res.json();
+                showToast(d.is_banned ? `Пользователь ${userId} забанен` : `Пользователь ${userId} разбанен`, d.is_banned ? 'error' : 'success');
+                loadAdminUsers();
+            } catch (e) { showToast('Ошибка при бане', 'error'); }
+        }
+
+        async function loadAdminPayments(statusFilter) {
+            try {
+                const res = await fetch(API_URL + `/admin/payments?limit=50&status=${statusFilter}`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const data = await res.json();
+                const tbody = document.getElementById('adm-payments-tbody');
+                tbody.innerHTML = '';
+                data.payments.forEach(p => {
+                    const statusClass = p.status === 'completed' ? 'text-green-400' : (p.status === 'pending' ? 'text-yellow-400' : 'text-gray-400');
+                    tbody.innerHTML += `<tr class="border-b border-white/5 hover:bg-white/5">
+                        <td class="p-3 font-mono text-xs">${p.id}</td>
+                        <td class="p-3 text-xs">${p.email || '—'}</td>
+                        <td class="p-3 text-center">${p.amount}₽</td>
+                        <td class="p-3 text-center">${p.duration_days}д</td>
+                        <td class="p-3 text-center">${p.devices_count}</td>
+                        <td class="p-3 text-center ${statusClass}">${p.status}</td>
+                    </tr>`;
+                });
+                if (!data.payments.length) tbody.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-gray-500">Нет платежей</td></tr>';
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadAdminPromos() {
+            try {
+                const res = await fetch(API_URL + '/admin/promos', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const promos = await res.json();
+                const tbody = document.getElementById('adm-promos-tbody');
+                tbody.innerHTML = '';
+                promos.forEach(p => {
+                    const usesText = p.max_uses > 0 ? `${p.current_uses}/${p.max_uses}` : `${p.current_uses}/∞`;
+                    const activeClass = p.is_active ? 'text-green-400' : 'text-red-400';
+                    tbody.innerHTML += `<tr class="border-b border-white/5 hover:bg-white/5">
+                        <td class="p-3 font-mono">${p.code}</td>
+                        <td class="p-3 text-center">+${p.days}</td>
+                        <td class="p-3 text-center">${usesText}</td>
+                        <td class="p-3 text-center ${activeClass}">${p.is_active ? '✅' : '❌'}</td>
+                        <td class="p-3 text-center">
+                            ${p.is_active ? `<button onclick="deleteAdminPromo(${p.id})" class="bg-red-900/30 text-red-400 px-2 py-1 rounded text-xs">Удалить</button>` : '—'}
+                        </td>
+                    </tr>`;
+                });
+                if (!promos.length) tbody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-gray-500">Нет промокодов</td></tr>';
+            } catch (e) { console.error(e); }
+        }
+
+        async function createAdminPromo() {
+            const code = document.getElementById('adm-promo-code').value.trim();
+            const days = parseInt(document.getElementById('adm-promo-days').value);
+            const maxUses = parseInt(document.getElementById('adm-promo-max').value || '0');
+            if (!code || !days) return showToast('Заполните код и дни', 'error');
+
+            try {
+                const res = await fetch(API_URL + '/admin/promos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ code, days, max_uses: maxUses })
+                });
+                if (!res.ok) { const d = await res.json(); throw new Error(d.detail); }
+                document.getElementById('adm-promo-code').value = '';
+                document.getElementById('adm-promo-days').value = '';
+                document.getElementById('adm-promo-max').value = '';
+                loadAdminPromos();
+                showToast('Промокод создан!', 'success');
+            } catch (e) { showToast(e.message || 'Ошибка', 'error'); }
+        }
+
+        async function deleteAdminPromo(id) {
+            if (!confirm('Деактивировать промокод?')) return;
+            try {
+                const res = await fetch(API_URL + `/admin/promos/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (!res.ok) throw new Error('Ошибка сервера');
+                showToast('Промокод деактивирован', 'success');
+                loadAdminPromos();
+            } catch (e) { showToast('Ошибка при удалении промокода', 'error'); }
+        }
+
+        async function loadAdminSpins() {
+            try {
+                const res = await fetch(API_URL + '/admin/fortune-history', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const spins = await res.json();
+                const tbody = document.getElementById('adm-spins-tbody');
+                tbody.innerHTML = '';
+                spins.forEach(s => {
+                    const date = s.spun_at ? new Date(s.spun_at).toLocaleDateString('ru-RU') : '—';
+                    tbody.innerHTML += `<tr class="border-b border-white/5 hover:bg-white/5">
+                        <td class="p-3">@${s.username || '—'} <span class="text-gray-500 text-xs">${s.email || ''}</span></td>
+                        <td class="p-3 text-center">${s.milestone} реф.</td>
+                        <td class="p-3 text-center text-neonBlue font-bold">+${s.prize_days} дн.</td>
+                        <td class="p-3 text-xs">${date}</td>
+                    </tr>`;
+                });
+                if (!spins.length) tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-gray-500">Нет спинов</td></tr>';
+            } catch (e) { console.error(e); }
+        }
+
+        // ==================== FORTUNE WHEEL ====================
+
+        let fortuneData = null;
+        let selectedMilestone = null;
+        let isSpinning = false;
+        let wheelRotation = 0;
+
+        const WHEEL_PRIZES = [
+            { days: 1,  label: '1 день' },
+            { days: 3,  label: '3 дня' },
+            { days: 5,  label: '5 дней' },
+            { days: 8,  label: '8 дней' },
+            { days: 15, label: '15 дней' },
+            { days: 30, label: '30 дней' },
+        ];
+
+        function initWheelLabels() {
+            const wheel = document.getElementById('fortune-wheel');
+            wheel.innerHTML = '';
+            const segAngle = 360 / WHEEL_PRIZES.length;
+            WHEEL_PRIZES.forEach((p, i) => {
+                const lbl = document.createElement('div');
+                lbl.className = 'wheel-label';
+                lbl.style.position = 'absolute';
+                lbl.style.left = '50%';
+                lbl.style.top = '50%';
+                lbl.style.width = '50%';
+                lbl.style.transformOrigin = '0 0';
+                lbl.style.transform = `rotate(${segAngle * i + segAngle / 2}deg) translateX(30px)`;
+                lbl.textContent = p.label;
+                wheel.appendChild(lbl);
+            });
+        }
+
+        async function loadFortuneData() {
+            if (!token) return;
+
+            try {
+                const res = await fetch(API_URL + '/fortune/status', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (!res.ok) return;
+                fortuneData = await res.json();
+
+                if (!fortuneData.linked) {
+                    document.getElementById('fortune-not-linked').classList.remove('hidden-view');
+                    document.getElementById('fortune-content').classList.add('hidden-view');
+                    return;
+                }
+
+                document.getElementById('fortune-not-linked').classList.add('hidden-view');
+                document.getElementById('fortune-content').classList.remove('hidden-view');
+                document.getElementById('fortune-ref-count').textContent = fortuneData.referral_count;
+
+                renderMilestones();
+                initWheelLabels();
+            } catch (e) {
+                console.error('Fortune load error:', e);
+            }
+        }
+
+        function renderMilestones() {
+            const container = document.getElementById('milestones-container');
+            container.innerHTML = '';
+            const milestones = fortuneData.milestones;
+            const available = fortuneData.available_spins;
+            const claimed = fortuneData.claimed;
+
+            milestones.forEach(m => {
+                const dot = document.createElement('div');
+                dot.className = 'milestone-dot ';
+                
+                if (claimed.includes(m)) {
+                    dot.className += 'milestone-claimed';
+                    dot.title = `${m} рефералов — использовано ✓`;
+                    dot.innerHTML = `<span>${m}✓</span>`;
+                } else if (available.includes(m)) {
+                    dot.className += 'milestone-available';
+                    dot.title = `${m} рефералов — доступна прокрутка!`;
+                    dot.innerHTML = `<span>${m}</span>`;
+                    dot.onclick = () => selectMilestone(m);
+                } else {
+                    dot.className += 'milestone-locked';
+                    dot.title = `${m} рефералов — не достигнуто`;
+                    dot.innerHTML = `<span>${m}</span>`;
+                }
+                container.appendChild(dot);
+            });
+        }
+
+        function selectMilestone(m) {
+            selectedMilestone = m;
+            const btn = document.getElementById('btn-spin');
+            btn.disabled = false;
+            btn.className = 'bg-gradient-to-r from-neonBlue to-blue-500 hover:from-white hover:to-white text-darkBg font-bold py-3 px-10 rounded-xl transition-all shadow-[0_0_15px_rgba(0,240,255,0.4)] cursor-pointer';
+            document.getElementById('spin-hint').textContent = `Майлстоун: ${m} рефералов — нажмите КРУТИТЬ!`;
+        }
+
+        async function spinFortuneWheel() {
+            if (isSpinning || !selectedMilestone) return;
+            isSpinning = true;
+
+            const btn = document.getElementById('btn-spin');
+            btn.disabled = true;
+            btn.className = 'bg-gray-600 text-gray-400 font-bold py-3 px-10 rounded-xl transition-all cursor-not-allowed';
+            btn.textContent = 'Крутим...';
+
+            try {
+                // Uses global `token` variable
+                const res = await fetch(API_URL + '/fortune/spin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({ milestone: selectedMilestone })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    showToast(err.detail || 'Ошибка', 'error');
+                    isSpinning = false;
+                    btn.textContent = 'КРУТИТЬ';
+                    return;
+                }
+
+                const result = await res.json();
+                const prizeIndex = WHEEL_PRIZES.findIndex(p => p.days === result.prize_days);
+                
+                // Calculate rotation to land on prize
+                const segAngle = 360 / WHEEL_PRIZES.length;
+                const targetAngle = 360 - (segAngle * prizeIndex + segAngle / 2);
+                const extraSpins = 360 * (5 + Math.floor(Math.random() * 3)); // 5-7 full spins
+                wheelRotation += extraSpins + targetAngle - (wheelRotation % 360);
+
+                const wheel = document.getElementById('fortune-wheel');
+                wheel.style.transform = `rotate(${wheelRotation}deg)`;
+
+                // Wait for animation to finish
+                setTimeout(() => {
+                    document.getElementById('prize-text').textContent = `+${result.prize_days} ${result.prize_label.split(' ').slice(1).join(' ') || 'дней'}`;
+                    document.getElementById('prize-popup').classList.remove('hidden-view');
+                    
+                    isSpinning = false;
+                    selectedMilestone = null;
+                    btn.textContent = 'КРУТИТЬ';
+                    
+                    loadFortuneData(); // Refresh milestones
+                }, 4500);
+
+            } catch (e) {
+                console.error('Spin error:', e);
+                showToast('Ошибка сети', 'error');
+                isSpinning = false;
+                btn.textContent = 'КРУТИТЬ';
+            }
+        }
+
+        function closePrizePopup() {
+            document.getElementById('prize-popup').classList.add('hidden-view');
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = `p-4 rounded-xl shadow-2xl flex items-center gap-3 animate-fade-in-right transform transition-all duration-300 border ${type === 'success' ? 'bg-green-500/10 border-green-500/20 text-green-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`;
+            
+            const icon = type === 'success' 
+                ? '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>'
+                : '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+            
+            toast.innerHTML = `${icon} <span class="font-bold text-sm">${message}</span>`;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-x-full');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+    <div id="toast-container" class="fixed bottom-6 right-6 z-[100] flex flex-col gap-3"></div>
+</body>
+</html>
+
