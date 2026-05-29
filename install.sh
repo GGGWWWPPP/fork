@@ -103,7 +103,7 @@ if [ -d "/opt/NodeConnect" ]; then
     git fetch --all 2>/dev/null || true
     git reset --hard origin/main 2>/dev/null || true
 else
-    git clone https://github.com/YOUR_USERNAME/NodeConnect.git /opt/NodeConnect
+    git clone https://github.com/GGGWWWPPP/fork.git /opt/NodeConnect
     cd /opt/NodeConnect
 fi
 ok "Проект загружен в /opt/NodeConnect"
