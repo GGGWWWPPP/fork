@@ -18,8 +18,8 @@ class Settings(BaseSettings):
     # Payments
     PLATEGA_API_KEY: str = "your_platega_api_key"
     PLATEGA_SHOP_ID: str = "your_shop_id"
-    STARS_PROVIDER_TOKEN: str = "" # Leave empty for Telegram Stars
     CRYPTO_BOT_TOKEN: str = "your_cryptobot_token"
+    USDT_RATE: float = 90.0  # Курс RUB/USDT для конвертации
     
     class Config:
         env_file = ".env"

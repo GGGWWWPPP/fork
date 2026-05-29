@@ -33,12 +33,17 @@ class MarzbanAPI:
             async with session.request(method, f"{self.base_url}{endpoint}", **kwargs) as resp:
                 if resp.status == 401:
                     await self._get_token()
-                    headers["Authorization"] = f"Bearer {self.token}"
-                    kwargs['headers'].update(headers)
+                    kwargs['headers']["Authorization"] = f"Bearer {self.token}"
                     async with session.request(method, f"{self.base_url}{endpoint}", **kwargs) as retry_resp:
+                        if retry_resp.status not in (200, 204):
+                            raise Exception(f"Marzban API error {retry_resp.status}")
+                        if retry_resp.status == 204 or retry_resp.content_length == 0:
+                            return {}
                         return await retry_resp.json()
+                if resp.status == 204 or resp.content_length == 0:
+                    return {}
                 if resp.status != 200:
-                   raise Exception(f"Marzban API error {resp.status}")
+                    raise Exception(f"Marzban API error {resp.status}")
                 return await resp.json()
 
     async def create_user(self, username: str, expire_days: int):

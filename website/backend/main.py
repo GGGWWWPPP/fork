@@ -1,4 +1,5 @@
 import logging
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -10,7 +11,15 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
-app = FastAPI(title="Node Connect API", version="2.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Инициализация БД при старте
+    init_db()
+    yield
+
+
+app = FastAPI(title="Node Connect API", version="2.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -22,12 +31,6 @@ app.add_middleware(
 
 # API routes
 app.include_router(router, prefix="/api")
-
-
-@app.on_event("startup")
-async def startup():
-    init_db()
-
 
 # Serve static frontend
 app.mount("/", StaticFiles(directory="/app/static", html=True), name="static")

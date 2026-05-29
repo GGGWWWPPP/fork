@@ -129,16 +129,9 @@ async def shortlink_redirect(request):
         if not short_id:
             return web.Response(text="Not found", status=404)
         
-        # Here we map short_id back to user_id or sub_id to fetch the real Marzban link
-        # This is a stub logic for the redirect mechanism
-        async with AsyncSessionLocal() as session:
-            # We would decode short_id to get sub.marzban_username
-            # Then fetch the actual subscription link from Marzban DB
-            # For now we'll just redirect to a placeholder or the main bot
-            pass
-            
-        # Example redirect
-        return web.HTTPFound(f"https://t.me/your_bot_name")
+        # TODO: Implement shortlink resolution
+        # Map short_id to subscription URL from Marzban
+        return web.Response(text="Shortlink service is not configured yet.", status=501)
     except Exception as e:
         logging.error(f"Shortlink error: {e}")
         return web.Response(text="Error", status=500)
@@ -147,8 +140,16 @@ async def shortlink_redirect(request):
 async def check_expiring_subscriptions():
     """Фоновая задача: уведомления об истечении подписки."""
     notified_today = set()
+    last_reset_date = None
     while True:
         try:
+            # Сбрасываем уведомления раз в сутки (в полночь UTC)
+            from datetime import date
+            today = date.today()
+            if last_reset_date != today:
+                notified_today.clear()
+                last_reset_date = today
+
             async with AsyncSessionLocal() as session:
                 result = await session.execute(
                     select(Subscription).join(User)
@@ -209,8 +210,7 @@ async def check_expiring_subscriptions():
         except Exception as e:
             logging.error(f"Expiry check error: {e}")
 
-        # Clear notified set at midnight, check every 6 hours
-        notified_today.clear()
+        # Проверяем каждые 6 часов
         await asyncio.sleep(6 * 3600)
 
 
@@ -234,7 +234,6 @@ async def main():
     # Start web server for Payment Webhooks (HTTP — nginx handles SSL)
     app = web.Application()
     app.router.add_post("/platega/webhook", platega_webhook)
-    app.router.add_get("/platega/webhook", platega_webhook)
     app.router.add_post("/cryptobot/webhook", cryptobot_webhook)
     app.router.add_get("/s/{short_id}", shortlink_redirect)
     runner = web.AppRunner(app)

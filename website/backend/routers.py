@@ -111,7 +111,7 @@ async def register_user(request: AuthRequest):
     validate_password_strength(request.password)
     hashed_pwd = get_password_hash(request.password)
 
-    create_user(email, hashed_pwd, request.password)
+    create_user(email, hashed_pwd)
 
     token = str(uuid.uuid4())
     update_user_token(email, token)
@@ -526,9 +526,10 @@ async def create_gift(request: GiftCreateRequest, user: dict = Depends(get_curre
     conn = get_db()
     try:
         with conn.cursor() as cur:
+            # created_by = None, т.к. web_users.id не является FK для users(user_id)
             cur.execute(
                 "INSERT INTO gift_certificates (code, days, created_by, created_at) VALUES (%s, %s, %s, NOW()) RETURNING id, code, days",
-                (code, request.days, user["id"])
+                (code, request.days, None)
             )
             result = cur.fetchone()
             conn.commit()

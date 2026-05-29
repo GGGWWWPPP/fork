@@ -20,7 +20,7 @@ while true; do
         MEM_USAGE_AFTER=$(free | grep Mem | awk '{print $3/$2 * 100.0}' | cut -d'.' -f1)
         if [ "$MEM_USAGE_AFTER" -gt "$THRESHOLD" ]; then
             echo "$(date): Memory still high (${MEM_USAGE_AFTER}%). Restarting Marzban..."
-            docker restart nodeconnect-marzban-1
+            docker restart nodeconnect-nodeconnect-1
         fi
     else
         echo "$(date): Memory usage normal: ${MEM_USAGE}%."

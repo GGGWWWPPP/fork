@@ -1,3 +1,4 @@
+import logging
 from aiogram import Router, F, Bot
 from aiogram.types import Message, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.filters import Command
@@ -6,11 +7,12 @@ from aiogram.fsm.state import State, StatesGroup
 from sqlalchemy import select, func, desc
 from config import config
 from database.db import AsyncSessionLocal
-from database.models import User, PromoCode
+from database.models import User, PromoCode, Subscription
 from keyboards.inline import admin_main_keyboard, admin_user_card_keyboard
 from services.marzban import MarzbanAPI
 from contextlib import suppress
 from aiogram.exceptions import TelegramBadRequest
+import logging
 
 router = Router()
 marzban = MarzbanAPI()
@@ -157,16 +159,32 @@ async def process_add_days(message: Message, state: FSMContext):
         
     days = int(message.text)
     async with AsyncSessionLocal() as session:
-         result = await session.execute(select(User).where(User.user_id == user_id))
-         user = result.scalar_one_or_none()
-         if user and user.marzban_username:
-             try:
-                 await marzban.add_days(user.marzban_username, days)
-                 await message.answer(f"✅ Успешно добавлено {days} дней пользователю {user_id}.")
-             except Exception as e:
-                 await message.answer(f"Ошибка API Marzban: {e}")
+         # Ищем подписки в таблице subscriptions
+         sub_result = await session.execute(select(Subscription).where(Subscription.user_id == user_id))
+         subs = sub_result.scalars().all()
+         if subs:
+             errors = []
+             for sub in subs:
+                 try:
+                     await marzban.add_days(sub.marzban_username, days)
+                 except Exception as e:
+                     errors.append(f"{sub.name}: {e}")
+             if errors:
+                 await message.answer(f"⚠️ Добавлено {days} дней, но с ошибками:\n" + "\n".join(errors))
+             else:
+                 await message.answer(f"✅ Успешно добавлено {days} дней ко всем подпискам пользователя {user_id} ({len(subs)} шт.).")
          else:
-             await message.answer("❌ Узел Marzban для данного пользователя не найден (скорее всего подписка не была создана).")
+             # Fallback: проверяем старое поле users.marzban_username
+             result = await session.execute(select(User).where(User.user_id == user_id))
+             user = result.scalar_one_or_none()
+             if user and user.marzban_username:
+                 try:
+                     await marzban.add_days(user.marzban_username, days)
+                     await message.answer(f"✅ Успешно добавлено {days} дней пользователю {user_id}.")
+                 except Exception as e:
+                     await message.answer(f"Ошибка API Marzban: {e}")
+             else:
+                 await message.answer("❌ Подписки не найдены для данного пользователя.")
     
     await state.clear()
     await message.answer("Вы вернулись в меню администратора.", reply_markup=admin_main_keyboard())
@@ -178,17 +196,28 @@ async def adm_remove_sub(callback: CallbackQuery):
     async with AsyncSessionLocal() as session:
          result = await session.execute(select(User).where(User.user_id == user_id))
          user = result.scalar_one_or_none()
-         if user and user.marzban_username:
-             try:
-                 await marzban.remove_user(user.marzban_username)
-                 user.marzban_username = None
-                 await session.commit()
-                 with suppress(TelegramBadRequest):
-                     await callback.message.edit_text(f"✅ Подписка пользователя {user_id} удалена.", reply_markup=admin_main_keyboard())
-             except Exception as e:
-                 await callback.message.answer(f"Ошибка API. {e}")
+         if user:
+              # Удалить все подписки пользователя из Marzban и БД
+              sub_result = await session.execute(select(Subscription).where(Subscription.user_id == user_id))
+              subs = sub_result.scalars().all()
+              for sub in subs:
+                  try:
+                      await marzban.remove_user(sub.marzban_username)
+                  except Exception as e:
+                      logging.warning(f"Failed to remove Marzban user {sub.marzban_username}: {e}")
+                  await session.delete(sub)
+              # Также очистить старое поле
+              if user.marzban_username:
+                  try:
+                      await marzban.remove_user(user.marzban_username)
+                  except Exception:
+                      pass
+                  user.marzban_username = None
+              await session.commit()
+              with suppress(TelegramBadRequest):
+                  await callback.message.edit_text(f"✅ Все подписки пользователя {user_id} удалены ({len(subs)} шт.).", reply_markup=admin_main_keyboard())
          else:
-             await callback.answer("Запись не найдена, либо подписка уже удалена.", show_alert=True)
+              await callback.answer("Пользователь не найден.", show_alert=True)
 
 @router.callback_query(F.data.startswith("adm_rtrial_"))
 async def adm_reset_trial(callback: CallbackQuery):

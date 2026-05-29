@@ -6,8 +6,8 @@ set -eo pipefail
 # 支持: Debian 11+ / Ubuntu 20.04+
 # ══════════════════════════════════════════════════════════════
 
-INSTALL_DIR="/opt/marzban"
-REPO_URL="https://github.com/Gozargah/Marzban.git"
+INSTALL_DIR="/opt/nodeconnect"
+REPO_URL="https://github.com/YOUR_USERNAME/NodeConnect.git"
 
 R='\033[0;31m'; G='\033[0;32m'; Y='\033[1;33m'; C='\033[0;36m'; B='\033[1;37m'; N='\033[0m'
 ok()   { echo -e "${G}[✓]${N} $1"; }
@@ -29,8 +29,8 @@ trap 'on_error $LINENO' ERR
 banner() {
   echo ""
   echo -e "${C}╔══════════════════════════════════════════════╗${N}"
-  echo -e "${C}║${B}            🚀 Marzban Установка              ${C}║${N}"
-  echo -e "${C}║${N}       Авто-настройка + SSL + Docker        ${C}║${N}"
+  echo -e "${C}║${B}          🚀 NodeConnect Panel             ${C}║${N}"
+  echo -e "${C}║${N}     Авто-настройка + SSL + Docker        ${C}║${N}"
   echo -e "${C}╚══════════════════════════════════════════════╝${N}"
   echo ""
 }
@@ -232,17 +232,17 @@ create_admin() {
   read -rp "$(echo -e "${C}Пароль администратора${N}: ")" ADMIN_PASS
 
   if [ -n "$ADMIN_USER" ] && [ -n "$ADMIN_PASS" ]; then
-    docker compose exec marzban marzban-cli admin create --sudo -u "$ADMIN_USER" -p "$ADMIN_PASS" || true
+    docker compose exec nodeconnect nodeconnect-cli admin create --sudo -u "$ADMIN_USER" -p "$ADMIN_PASS" || true
     ok "Администратор $ADMIN_USER создан"
   else
-    warn "Создание админа пропущено, вы можете сделать это позже: docker compose exec marzban marzban-cli admin create --sudo"
+    warn "Создание админа пропущено, вы можете сделать это позже: docker compose exec nodeconnect nodeconnect-cli admin create --sudo"
   fi
 }
 
 show_result() {
   echo ""
   echo -e "${G}╔══════════════════════════════════════════════╗${N}"
-  echo -e "${G}║${B}       🚀 Установка Marzban завершена         ${G}║${N}"
+  echo -e "${G}║${B}     🚀 Установка NodeConnect завершена       ${G}║${N}"
   echo -e "${G}╚══════════════════════════════════════════════╝${N}"
   echo ""
   echo -e "  🌐 Панель:   ${C}https://${PANEL_DOMAIN}${N}"

@@ -67,7 +67,7 @@ services:
       - bot
 
   # ========================
-  # Marzban & MariaDB
+  # NodeConnect Core & MariaDB
   # ========================
   mariadb:
     image: mariadb:10.11
@@ -76,24 +76,30 @@ services:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: marzban
       MYSQL_USER: marzban
-      MYSQL_PASSWORD: ${MARZBAN_PASSWORD:-marzban_password}
+      # Используем отдельную переменную для пароля MariaDB (не путать с MARZBAN_PASSWORD — это пароль API)
+      MYSQL_PASSWORD: ${MARIADB_PASSWORD:-marzban_password}
     volumes:
       - mariadb_data:/var/lib/mysql
     ports:
       - "127.0.0.1:3306:3306"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
-  marzban:
+  # Marzban VPN Panel (используется nodeconnect-core — кастомный форк)
+  # network_mode: host нужен для Xray — привязка к портам хоста для VPN-трафика
+  # depends_on НЕ работает с network_mode: host, поэтому restart: always обеспечивает повторный запуск
+  nodeconnect:
     build: 
       context: ./nodeconnect-core
       dockerfile: Dockerfile
     restart: always
     env_file: ./nodeconnect-core/.env
     network_mode: host
-    depends_on:
-      - mariadb
-      - tor
     volumes:
-      - /var/lib/marzban:/var/lib/marzban
+      - /var/lib/nodeconnect:/var/lib/nodeconnect
 
   # ========================
   # Tor Proxy (For Dark Web)

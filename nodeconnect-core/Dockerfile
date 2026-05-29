@@ -29,8 +29,9 @@ COPY --from=build /usr/local/share/xray /usr/local/share/xray
 COPY . /code
 
 RUN pip install "setuptools<70" \
-    && ln -s /code/marzban-cli.py /usr/bin/marzban-cli \
-    && chmod +x /usr/bin/marzban-cli \
-    && marzban-cli completion install --shell bash
+    && ln -s /code/nodeconnect-cli.py /usr/bin/nodeconnect-cli \
+    && chmod +x /usr/bin/nodeconnect-cli \
+    && ln -s /usr/bin/nodeconnect-cli /usr/bin/marzban-cli \
+    && nodeconnect-cli completion install --shell bash
 
 CMD ["bash", "-c", "alembic upgrade head; python main.py"]

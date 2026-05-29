@@ -1,3 +1,4 @@
+import os
 import requests
 import urllib.parse
 import logging
@@ -92,7 +93,7 @@ def create_platega_payment(amount: int, order_id: str, email: str) -> str:
         "paymentMethod": 2,
         "paymentDetails": {"amount": amount, "currency": "RUB"},
         "description": f"Подписка Node Connect VPN",
-        "return": "https://nodeconnect.tech",
+        "return": os.environ.get("SITE_URL", "https://yourdomain.com"),
         "payload": order_id,
     }
 

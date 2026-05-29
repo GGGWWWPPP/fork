@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     # Marzban VPN API
-    marzban_url: str = "https://admin.nodeconnect.tech"
+    marzban_url: str = "https://panel.yourdomain.com"
     marzban_username: str = "NodeConnect"
     marzban_password: str = ""
 

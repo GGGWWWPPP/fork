@@ -7,6 +7,7 @@ from database.db import AsyncSessionLocal
 from database.models import User, Subscription
 from sqlalchemy import select
 from services.marzban import MarzbanAPI
+from config import config
 from services.platega import PlategaAPI
 from services.cryptobot import CryptoBotAPI
 from contextlib import suppress
@@ -302,7 +303,7 @@ async def _create_platega_payment_msg(message: Message, action, sub_id, days, us
 
 async def _create_cryptobot_payment(callback: CallbackQuery, action, sub_id, days, users, price):
     """Создать CryptoBot платёж (из callback)."""
-    amount_usdt = round(price / 90, 2)
+    amount_usdt = round(price / config.USDT_RATE, 2)
     order_id = f"order_{callback.from_user.id}_{action}_{sub_id}_{days}_{users}_{price}"
     try:
         pay_url = await cryptobot.create_invoice(amount_usdt, order_id)
@@ -321,7 +322,7 @@ async def _create_cryptobot_payment(callback: CallbackQuery, action, sub_id, day
 
 async def _create_cryptobot_payment_msg(message: Message, action, sub_id, days, users, price):
     """Создать CryptoBot платёж (из message после ввода email)."""
-    amount_usdt = round(price / 90, 2)
+    amount_usdt = round(price / config.USDT_RATE, 2)
     order_id = f"order_{message.from_user.id}_{action}_{sub_id}_{days}_{users}_{price}"
     try:
         pay_url = await cryptobot.create_invoice(amount_usdt, order_id)

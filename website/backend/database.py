@@ -1,3 +1,4 @@
+import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from config import settings
@@ -35,7 +36,7 @@ def init_db():
                     token TEXT,
                     referral_code VARCHAR(20) UNIQUE,
                     referred_by_id INTEGER REFERENCES web_users(id),
-                    password_plain TEXT,
+
                     created_at BIGINT DEFAULT 0
                 )
             """)
@@ -48,9 +49,7 @@ def init_db():
                         ALTER TABLE web_users ADD COLUMN referral_code VARCHAR(20) UNIQUE;
                         ALTER TABLE web_users ADD COLUMN referred_by_id INTEGER REFERENCES web_users(id);
                     END IF;
-                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='web_users' AND column_name='password_plain') THEN
-                        ALTER TABLE web_users ADD COLUMN password_plain TEXT;
-                    END IF;
+
                 END $$;
             """)
             
@@ -96,19 +95,17 @@ def get_user_by_token(token: str):
         conn.close()
 
 
-def create_user(email: str, password_hash: str, password_plain: str = None):
+def create_user(email: str, password_hash: str):
     import random
     import string
     import time
     conn = get_db()
     try:
-        # Generate unique referral code
         ref_code = 'NC-' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
-        
         with conn.cursor() as cur:
             cur.execute(
-                "INSERT INTO web_users (email, password_hash, password_plain, referral_code, created_at) VALUES (%s, %s, %s, %s, %s) ON CONFLICT (email) DO NOTHING",
-                (email, password_hash, password_plain, ref_code, int(time.time())),
+                "INSERT INTO web_users (email, password_hash, referral_code, created_at) VALUES (%s, %s, %s, %s) ON CONFLICT (email) DO NOTHING",
+                (email, password_hash, ref_code, int(time.time())),
             )
         conn.commit()
     finally:
@@ -266,11 +263,11 @@ def record_fortune_spin(bot_user_id: int, milestone: int, prize_days: int):
 
 # ==================== ADMIN PANEL ====================
 
-ADMIN_EMAIL = "lucifertryp@gmail.com"
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@example.com")
 
 
 def is_admin_user(email: str) -> bool:
-    return email.lower() == ADMIN_EMAIL
+    return email.lower() == ADMIN_EMAIL.lower()
 
 
 def admin_get_stats():
